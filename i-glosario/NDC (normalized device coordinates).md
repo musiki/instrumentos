@@ -10,4 +10,3 @@ Para ajustar las coordenadas de píxeles a este sistema, podemos convertir las p
 • **Para Y**: $-((\text{posY} / \text{alto}) \times 2 - 1)$
 
 
-
