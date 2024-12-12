@@ -1,0 +1,32 @@
+{
+	"nodes":[
+		{"id":"b2d360aef6ea765f","x":-253,"y":-344,"width":250,"height":60,"type":"text","text":"0 organología"},
+		{"type":"text","text":"1 percepción auditiva","id":"52a2c9d7c585730d","x":-253,"y":-220,"width":250,"height":60},
+		{"type":"text","text":"2  producción","id":"826f8cbc7997b3e6","x":-253,"y":-100,"width":250,"height":60},
+		{"type":"text","text":"3 protocolos","id":"aab017790b8a984f","x":-253,"y":20,"width":250,"height":60},
+		{"type":"text","text":"4 hibridaciones","id":"9ea33ce6f4720e92","x":-253,"y":160,"width":250,"height":60},
+		{"type":"text","text":"5 vocalidades","id":"c7c1cbc33abf837d","x":-253,"y":280,"width":250,"height":60},
+		{"id":"27fe2528a3f4cbcf","x":947,"y":297,"width":250,"height":60,"type":"text","text":"por cues de escucha"},
+		{"type":"text","text":"por cues centralizados","id":"d10a2e8c7d36a548","x":947,"y":372,"width":250,"height":60},
+		{"type":"text","text":"espacial / proporcional","id":"13bada282bdd55e1","x":617,"y":40,"width":250,"height":60},
+		{"id":"4a433775f255c4da","x":617,"y":125,"width":250,"height":60,"type":"text","text":"mensurada"},
+		{"id":"c2a9e2be2b5345e5","x":617,"y":207,"width":250,"height":60,"type":"text","text":"click track"},
+		{"type":"text","text":"condicional ","id":"546a032cb122a345","x":617,"y":297,"width":250,"height":60},
+		{"id":"20f9e6368ac3b0d4","x":220,"y":-111,"width":250,"height":50,"type":"text","text":"midi"},
+		{"type":"text","text":"vst","id":"77bb9d9ade56b6e8","x":220,"y":-20,"width":250,"height":50},
+		{"type":"text","text":"m4l","id":"c4a75840f25ed1af","x":220,"y":70,"width":250,"height":50},
+		{"id":"875eaddb8a548a87","x":224,"y":172,"width":250,"height":60,"type":"text","text":"notación/tiempo"}
+	],
+	"edges":[
+		{"id":"896d3cd46e20f09b","fromNode":"aab017790b8a984f","fromSide":"right","toNode":"20f9e6368ac3b0d4","toSide":"left"},
+		{"id":"d3f65440893dfebd","fromNode":"aab017790b8a984f","fromSide":"right","toNode":"77bb9d9ade56b6e8","toSide":"left"},
+		{"id":"d425edd723a6b1f5","fromNode":"aab017790b8a984f","fromSide":"right","toNode":"c4a75840f25ed1af","toSide":"left"},
+		{"id":"e4f9950215193923","fromNode":"aab017790b8a984f","fromSide":"right","toNode":"875eaddb8a548a87","toSide":"left"},
+		{"id":"96ab833700566149","fromNode":"875eaddb8a548a87","fromSide":"right","toNode":"c2a9e2be2b5345e5","toSide":"left"},
+		{"id":"222b3a5482893a92","fromNode":"875eaddb8a548a87","fromSide":"right","toNode":"546a032cb122a345","toSide":"left"},
+		{"id":"ae40879ca51bc901","fromNode":"875eaddb8a548a87","fromSide":"right","toNode":"13bada282bdd55e1","toSide":"left"},
+		{"id":"e36596243a364fe8","fromNode":"875eaddb8a548a87","fromSide":"right","toNode":"4a433775f255c4da","toSide":"left"},
+		{"id":"07d451914c8c129d","fromNode":"546a032cb122a345","fromSide":"right","toNode":"27fe2528a3f4cbcf","toSide":"left"},
+		{"id":"6a6e27b27751d7e9","fromNode":"546a032cb122a345","fromSide":"right","toNode":"d10a2e8c7d36a548","toSide":"left"}
+	]
+}
