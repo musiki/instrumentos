@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sinusoide ON/OFF</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: black;
+      }
+
+      button {
+        font-size: 20px;
+        padding: 15px;
+        border: none;
+        background-color: white;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="sound-button">Encender</button>
+    <script>
+      let context = new (window.AudioContext || window.webkitAudioContext)();
+      let osc = null;
+      const button = document.getElementById("sound-button");
+
+      button.addEventListener("mousedown", () => {
+        osc = context.createOscillator();
+        osc.frequency.value = Math.random() * 800 + 200; // Frecuencia aleatoria
+        osc.connect(context.destination);
+        osc.start();
+        button.innerText = "Apagar";
+      });
+
+      button.addEventListener("mouseup", () => {
+        if (osc) {
+          osc.stop();
+          button.innerText = "Encender";
+        }
+      });
+    </script>
+  </body>
+</html>

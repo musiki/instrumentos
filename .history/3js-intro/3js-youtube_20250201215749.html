@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Random YouTube Video Texture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: black;
+      }
+      #video-container {
+        position: absolute;
+        width: 640px;
+        height: 360px;
+        top: -1000px; /* Hide the video offscreen */
+        left: -1000px;
+        opacity: 0;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="video-container"></div>
+
+    <script>
+      let scene, camera, renderer, video, texture, material, mesh, player;
+
+      const videoCodes = [
+        "dQw4w9WgXcQ", // Rick Astley - Never Gonna Give You Up
+        "3JZ_D3ELwOQ", // Bohemian Rhapsody - Queen
+        "LXb3EKWsInQ", // Relaxing nature video
+        "kJQP7kiw5Fk", // Despacito
+        "9bZkp7q19f0", // Gangnam Style
+      ];
+
+      function getRandomVideo() {
+        return videoCodes[Math.floor(Math.random() * videoCodes.length)];
+      }
+
+      function onYouTubeIframeAPIReady() {
+        const videoId = getRandomVideo();
+        player = new YT.Player("video-container", {
+          videoId: videoId,
+          playerVars: {
+            autoplay: 1,
+            controls: 0,
+            showinfo: 0,
+            modestbranding: 1,
+            loop: 1,
+            mute: 1, // Ensure autoplay works
+            playlist: videoId,
+          },
+          events: {
+            onReady: () => {
+              video = player.getIframe();
+              setupThreeJS(video);
+              player.playVideo();
+            },
+          },
+        });
+      }
+
+      function setupThreeJS(videoElement) {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(
+          75,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000
+        );
+        camera.position.z = 5;
+
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        texture = new THREE.VideoTexture(videoElement);
+        material = new THREE.MeshBasicMaterial({ map: texture });
+
+        const geometry = new THREE.PlaneGeometry(4, 2.5);
+        mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        animate();
+
+        renderer.domElement.addEventListener("click", changeVideo);
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+        mesh.rotation.y += 0.001;
+        renderer.render(scene, camera);
+      }
+
+      function changeVideo() {
+        const newVideoId = getRandomVideo();
+        player.loadVideoById(newVideoId);
+      }
+
+      window.onload = () => {
+        if (typeof YT !== "undefined") {
+          onYouTubeIframeAPIReady();
+        }
+      };
+    </script>
+  </body>
+</html>

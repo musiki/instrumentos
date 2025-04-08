@@ -1,0 +1,253 @@
+import * as Tone from "tone";
+import Waveform from "waveform-playlist";
+
+// State variables
+let isRecording = false;
+let audioBuffer = null;
+let waveformInstance = null;
+let mediaRecorder = null;
+let audioChunks = [];
+let selectionStart = 0;
+let selectionEnd = 0;
+let playbackPosition = 0;
+let showHud = true; // HUD visibility
+
+// Inject CSS dynamically
+function injectCSS(styles) {
+  const styleSheet = document.createElement("style");
+  styleSheet.type = "text/css";
+  styleSheet.innerText = styles;
+  document.head.appendChild(styleSheet);
+}
+
+// HUD + Styling
+injectCSS(`
+  body {
+    background-color: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    position: relative;
+  }
+
+  .waveform {
+    width: 100%;
+    height: 80%;
+  }
+
+  .record-button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 10%;
+    margin: auto;
+    // width: 50%;
+    background-color: gray;
+    border: none;
+    transition: background 0.3s;
+  }
+
+  .record-button.recording {
+    background-color: red;
+  }
+
+  .hud {
+    position: absolute;
+    bottom: 10%;
+    left: 5%;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 14px;
+    padding: 10px;
+    border-radius: 5px;
+    display: ${showHud ? "block" : "none"};
+  }
+`);
+
+// Function to initialize AudioContext
+function startAudioContext() {
+  if (Tone.context.state !== "running") {
+    Tone.context
+      .resume()
+      .then(() => console.log("AudioContext resumed successfully!"));
+  }
+}
+
+// Simulate a user gesture by dispatching a fake event
+function simulateUserGesture() {
+  const button = document.createElement("button");
+  button.style.display = "none";
+  document.body.appendChild(button);
+  button.click();
+  document.body.removeChild(button);
+}
+
+// Try to resume AudioContext when the page loads
+document.addEventListener("DOMContentLoaded", () => {
+  simulateUserGesture();
+  startAudioContext();
+});
+
+// Also attempt to resume when the user interacts with the page
+document.addEventListener("click", startAudioContext);
+document.addEventListener("touchstart", startAudioContext);
+document.addEventListener("keydown", startAudioContext);
+
+// Function to toggle recording state
+function toggleRecording() {
+  isRecording = !isRecording;
+  updateButtonState();
+
+  if (isRecording) {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        audioBuffer = await Tone.getContext().rawContext.decodeAudioData(
+          arrayBuffer
+        );
+        visualizeWaveform(audioBlob);
+      };
+
+      mediaRecorder.start();
+    });
+  } else if (mediaRecorder) {
+    mediaRecorder.stop();
+  }
+}
+
+// Function to visualize waveform and handle selection
+function visualizeWaveform(audioBlob) {
+  if (!audioBlob) return;
+
+  const waveformContainer = document.getElementById("waveform");
+  waveformContainer.innerHTML = "";
+
+  waveformInstance = Waveform({
+    container: waveformContainer,
+    waveColor: "white",
+    progressColor: "gray",
+    backgroundColor: "black",
+    cursorColor: "white",
+    barWidth: 2,
+    responsive: true,
+  });
+
+  waveformInstance
+    .load([{ src: URL.createObjectURL(audioBlob), name: "Audio" }])
+    .then(() => {
+      Tone.getContext()
+        .rawContext.decodeAudioData(audioBlob.arrayBuffer())
+        .then((buffer) => {
+          audioBuffer = buffer;
+          updateHUD();
+          resizeWaveform(buffer);
+        });
+    });
+
+  // Add selection event
+  waveformInstance.on("select", (selection) => {
+    selectionStart = selection.start;
+    selectionEnd = selection.end;
+    updateHUD();
+    loopSelectedAudio();
+  });
+
+  waveformInstance.on("timeupdate", (time) => {
+    playbackPosition = time;
+    updateHUD();
+  });
+}
+
+// Function to scale the waveform width dynamically
+function resizeWaveform(buffer) {
+  const duration = buffer.duration;
+  const container = document.getElementById("waveform");
+  const screenWidth = window.innerWidth;
+
+  // Adjust based on duration
+  const scaleFactor = screenWidth / duration;
+  container.style.width = `${scaleFactor * duration}px`;
+  updateHUD();
+}
+
+// Function to loop selected portion of the audio
+function loopSelectedAudio() {
+  if (!audioBuffer) return;
+
+  const player = new Tone.Player(audioBuffer).toDestination();
+  player.loop = true;
+  player.start(0, selectionStart, selectionEnd - selectionStart);
+}
+
+// Function to update button state
+function updateButtonState() {
+  const button = document.getElementById("record-button");
+  if (button) {
+    button.classList.toggle("recording", isRecording);
+  }
+}
+
+// Function to update HUD display
+function updateHUD() {
+  if (!showHud) return;
+
+  const hud = document.getElementById("hud");
+  if (hud) {
+    hud.innerHTML = `
+      <b>Buffer Size:</b> ${audioBuffer ? audioBuffer.length : "N/A"}<br>
+      <b>Total Time:</b> ${
+        audioBuffer ? audioBuffer.duration.toFixed(2) : "N/A"
+      } sec<br>
+      <b>Selection Start:</b> ${selectionStart.toFixed(2)} sec<br>
+      <b>Selection End:</b> ${selectionEnd.toFixed(2)} sec<br>
+      <b>Playback Position:</b> ${playbackPosition.toFixed(2)} sec<br>
+      <b>Window Width:</b> ${window.innerWidth}px
+    `;
+  }
+}
+
+// Initialize the UI
+function init() {
+  const app = document.createElement("div");
+  app.className = "app";
+
+  const waveformDiv = document.createElement("div");
+  waveformDiv.id = "waveform";
+  waveformDiv.className = "waveform";
+
+  const button = document.createElement("button");
+  button.id = "record-button";
+  button.className = "record-button";
+  button.onclick = toggleRecording;
+
+  const hud = document.createElement("div");
+  hud.id = "hud";
+  hud.className = "hud";
+
+  app.appendChild(waveformDiv);
+  app.appendChild(button);
+  app.appendChild(hud);
+  document.body.appendChild(app);
+}
+
+// Wait until DOM is ready
+document.addEventListener("DOMContentLoaded", init);
+window.addEventListener("resize", updateHUD);

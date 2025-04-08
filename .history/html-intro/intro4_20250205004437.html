@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arpeggiator - Just Intonation Harmonics</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: black;
+        overflow: hidden;
+      }
+      #circle {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: grey;
+        position: absolute;
+        cursor: grab;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="circle"></div>
+    <script>
+      let context;
+      let oscillator, gainNode;
+      let isDragging = false;
+      let harmonicSeries = [];
+      let currentNoteIndex = 0;
+      let arpeggioSpeed = 0.5; // Initial speed of the arpeggiator
+      let arpeggioInterval;
+      const circle = document.getElementById("circle");
+
+      function initAudio() {
+        if (!context) {
+          context = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (context.state === "suspended") {
+          context.resume();
+        }
+
+        // Set up oscillator and gain node
+        oscillator = context.createOscillator();
+        gainNode = context.createGain();
+        oscillator.type = "sine"; // Sinusoidal waveform
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+
+        oscillator.start();
+      }
+
+      function startArpeggio() {
+        // Make sure previous interval is cleared
+        if (arpeggioInterval) clearInterval(arpeggioInterval);
+
+        arpeggioInterval = setInterval(() => {
+          if (oscillator) {
+            // Get the current harmonic based on the index
+            let harmonic = harmonicSeries[currentNoteIndex];
+            oscillator.frequency.setValueAtTime(harmonic, context.currentTime);
+
+            // Move to the next harmonic in the series
+            currentNoteIndex++;
+            if (currentNoteIndex >= harmonicSeries.length) {
+              currentNoteIndex = 0; // Loop through the harmonics
+            }
+          }
+        }, arpeggioSpeed * 1000); // Control the speed based on mouse Y position
+      }
+
+      function updateArpeggioSpeed(y) {
+        // Map Y position (0 to 1) to control the speed of the arpeggio
+        arpeggioSpeed = 1 - y / window.innerHeight;
+      }
+
+      function stopSynth() {
+        // Stop oscillator and clear interval
+        if (oscillator) {
+          oscillator.stop();
+          oscillator = null;
+        }
+        if (arpeggioInterval) {
+          clearInterval(arpeggioInterval);
+        }
+      }
+
+      function setupArpeggio() {
+        // Define the just intonation harmonic series (based on a fundamental frequency)
+        let fundamental = 220; // Example fundamental frequency (A3)
+        harmonicSeries = [
+          fundamental, // 1st harmonic: fundamental
+          (fundamental * 3) / 2, // 3rd harmonic
+          (fundamental * 5) / 4, // 5th harmonic
+          (fundamental * 7) / 4, // 7th harmonic
+          (fundamental * 9) / 8, // 9th harmonic
+        ];
+      }
+
+      circle.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        circle.style.backgroundColor = "red";
+        initAudio();
+        setupArpeggio();
+        updateArpeggioSpeed(e.clientY);
+        startArpeggio();
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (isDragging) {
+          circle.style.left = `${e.clientX - 50}px`;
+          circle.style.top = `${e.clientY - 50}px`;
+          updateArpeggioSpeed(e.clientY);
+        }
+      });
+
+      document.addEventListener("mouseup", () => {
+        if (isDragging) {
+          isDragging = false;
+          circle.style.backgroundColor = "grey";
+          stopSynth();
+        }
+      });
+    </script>
+  </body>
+</html>

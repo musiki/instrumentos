@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pac-Man Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+        }
+
+        #game-canvas {
+            background-color: #000;
+            border: 4px solid #2121DE;
+        }
+
+        #scoreboard {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            color: white;
+            font-size: 18px;
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: -80px;
+            left: 0;
+            width: 100%;
+            color: yellow;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #FF0000;
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+        }
+
+        .start-button {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 20px;
+            background-color: #FFFF00;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="scoreboard">
+            <div>SCORE: <span id="score">0</span></div>
+            <div>LIVES: <span id="lives">3</span></div>
+        </div>
+        <canvas id="game-canvas" width="600" height="600"></canvas>
+        <div id="instructions">
+            Controls: Arrow Keys or WASD to move<br>
+            <small>Press M to mute/unmute sounds</small>
+        </div>
+        <div class="game-over" id="game-over">GAME OVER</div>
+        <button class="start-button" id="start-button">START GAME</button>
+    </div>
+
+    <script>
+        // Game variables
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const livesElement = document.getElementById('lives');
+        const gameOverElement = document.getElementById('game-over');
+        const startButton = document.getElementById('start-button');
+
+        // Game constants
+        const CELL_SIZE = 30;
+        const GRID_WIDTH = canvas.width / CELL_SIZE;
+        const GRID_HEIGHT = canvas.height / CELL_SIZE;
+        const PACMAN_SPEED = 2;
+        const GHOST_SPEED = 1.5;
+        const DOT_SIZE = 6;
+        const POWER_DOT_SIZE = 12;
+        
+        // Game state
+        let score = 0;
+        let lives = 3;
+        let gameRunning = false;
+        let pacman = {
+            x: CELL_SIZE * 1.5,
+            y: CELL_SIZE * 1.5,
+            radius: CELL_SIZE / 2 - 2,
+            angle: 0,
+            direction: 'right',
+            mouthOpen: true,
+            mouthAngle: 0.7,
+            speed: PACMAN_SPEED
+        };
+        
+        let ghosts = [];
+        let dots = [];
+        let powerDots = [];
+        let walls = [];
+        let powerMode = false;
+        let powerModeTimer = null;
+        let frameCount = 0;
+        let muted = false;
+
+        // Audio Context
+        let audioCtx;
+        let munchSound, deathSound, powerSound, ghostEatSound, introSound;
+
+        // Initialize game
+        function initGame() {
+            // Reset game state
+            score = 0;
+            lives = 3;
+            powerMode = false;
+            if (powerModeTimer) clearTimeout(powerModeTimer);
+            
+            scoreElement.textContent = score;
+            livesElement.textContent = lives;
+            gameOverElement.style.display = 'none';
+
+            // Initialize Pacman
+            pacman.x = CELL_SIZE * 1.5;
+            pacman.y = CELL_SIZE * 1.5;
+            pacman.direction = 'right';
+            pacman.angle = 0;
+
+            // Initialize maze
+            createMaze();
+            
+            // Initialize ghosts
+            ghosts = [
+                { x: CELL_SIZE * 9.5, y: CELL_SIZE * 9.5, radius: CELL_SIZE / 2 - 2, color: '#FF0000', direction: 'left', speed: GHOST_SPEED, mode: 'scatter' }, // Red
+                { x: CELL_SIZE * 9.5, y: CELL_SIZE * 11.5, radius: CELL_SIZE / 2 - 2, color: '#00FFFF', direction: 'up', speed: GHOST_SPEED, mode: 'scatter' },  // Cyan
+                { x: CELL_SIZE * 8.5, y: CELL_SIZE * 9.5, radius: CELL_SIZE / 2 - 2, color: '#FFB8FF', direction: 'down', speed: GHOST_SPEED, mode: 'scatter' }, // Pink
+                { x: CELL_SIZE * 10.5, y: CELL_SIZE * 9.5, radius: CELL_SIZE / 2 - 2, color: '#FFB852', direction: 'right', speed: GHOST_SPEED, mode: 'scatter' } // Orange
+            ];
+
+            // Setup audio
+            if (!audioCtx) {
+                setupAudio();
+            }
+
+            // Start game
+            gameRunning = true;
+            playSound(introSound);
+            gameLoop();
+        }
+
+        // Create the maze, dots, and power dots
+        function createMaze() {
+            // Clear existing elements
+            walls = [];
+            dots = [];
+            powerDots = [];
+
+            // Create outer walls
+            for (let i = 0; i < GRID_WIDTH; i++) {
+                walls.push({ x: i * CELL_SIZE, y: 0, width: CELL_SIZE, height: CELL_SIZE });
+                walls.push({ x: i * CELL_SIZE, y: (GRID_HEIGHT - 1) * CELL_SIZE, width: CELL_SIZE, height: CELL_SIZE });
+            }
+            
+            for (let i = 1; i < GRID_HEIGHT - 1; i++) {
+                walls.push({ x: 0, y: i * CELL_SIZE, width: CELL_SIZE, height: CELL_SIZE });
+                walls.push({ x: (GRID_WIDTH - 1) * CELL_SIZE, y: i * CELL_SIZE, width: CELL_SIZE, height: CELL_SIZE });
+            }
+
+            // Create inner walls
+            for (let i = 3; i < GRID_WIDTH - 3; i += 2) {
+                for (let j = 3; j < GRID_HEIGHT - 3; j += 2) {
+                    if (Math.random() < 0.4) {
+                        walls.push({ x: i * CELL_SIZE, y: j * CELL_SIZE, width: CELL_SIZE, height: CELL_SIZE });
+                    }
+                }
+            }
+
+            // Create a ghost house in the center
+            const centerX = Math.floor(GRID_WIDTH / 2) - 1;
+            const centerY = Math.floor(GRID_HEIGHT / 2) - 1;
+            
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    if (i === 0 || i === 2 || j === 0 || j === 2) {
+                        walls.push({ 
+                            x: (centerX + i) * CELL_SIZE, 
+                            y: (centerY + j) * CELL_SIZE, 
+                            width: CELL_SIZE, 
+                            height: CELL_SIZE 
+                        });
+                    }
+                }
+            }
+
+            // Create dots
+            for (let i = 1; i < GRID_WIDTH - 1; i++) {
+                for (let j = 1; j < GRID_HEIGHT - 1; j++) {
+                    // Skip if there's a wall here
+                    if (walls.some(wall => 
+                        wall.x === i * CELL_SIZE && 
+                        wall.y === j * CELL_SIZE)) {
+                        continue;
+                    }
+
+                    // Skip ghost house area
+                    if (i >= centerX && i <= centerX + 2 && 
+                        j >= centerY && j <= centerY + 2) {
+                        continue;
+                    }
+
+                    dots.push({
+                        x: i * CELL_SIZE + CELL_SIZE / 2,
+                        y: j * CELL_SIZE + CELL_SIZE / 2,
+                        radius: DOT_SIZE / 2
+                    });
+                }
+            }
+
+            // Create power dots in the corners
+            powerDots.push({
+                x: 1.5 * CELL_SIZE,
+                y: 1.5 * CELL_SIZE,
+                radius: POWER_DOT_SIZE / 2
+            });
+            
+            powerDots.push({
+                x: (GRID_WIDTH - 1.5) * CELL_SIZE,
+                y: 1.5 * CELL_SIZE,
+                radius: POWER_DOT_SIZE / 2
+            });
+            
+            powerDots.push({
+                x: 1.5 * CELL_SIZE,
+                y: (GRID_HEIGHT - 1.5) * CELL_SIZE,
+                radius: POWER_DOT_SIZE / 2
+            });
+            
+            powerDots.push({
+                x: (GRID_WIDTH - 1.5) * CELL_SIZE,
+                y: (GRID_HEIGHT - 1.5) * CELL_SIZE,
+                radius: POWER_DOT_SIZE / 2
+            });
+        }
+
+        // Set up Web Audio API
+        function setupAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Create munch sound (short beep)
+            munchSound = createOscillatorSound(600, 0.07);
+            
+            // Create death sound (descending glissando)
+            deathSound = createDeathSound();
+            
+            // Create power pellet sound (alternating tones)
+            powerSound = createPowerSound();
+            
+            // Create ghost eat sound (upward glissando)
+            ghostEatSound = createGhostEatSound();
+            
+            // Create intro sound (simple melody)
+            introSound = createIntroSound();
+        }
+
+        function createOscillatorSound(frequency, duration) {
+            return () => {
+                if (muted || !audioCtx) return;
+                
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'square';
+                oscillator.frequency.value = frequency;
+                
+                gainNode.gain.value = 0.1;
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                
+                setTimeout(() => {
+                    oscillator.stop();
+                }, duration * 1000);
+            };
+        }
+
+        function createDeathSound() {
+            return () => {
+                if (muted || !audioCtx) return;
+                
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 1.5);
+                
+                gainNode.gain.value = 0.1;
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                
+                setTimeout(() => {
+                    oscillator.stop();
+                }, 1500);
+            };
+        }
+
+        function createPowerSound() {
+            return () => {
+                if (muted || !audioCtx) return;
+                
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+                
+                // Alternate between two frequencies
+                setInterval(() => {
+                    oscillator.frequency.value = oscillator.frequency.value === 200 ? 150 : 200;
+                }, 250);
+                
+                gainNode.gain.value = 0.1;
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                
+                setTimeout(() => {
+                    oscillator.stop();
+                }, 7000); // Power mode duration
+            };
+        }
+
+        function createGhostEatSound() {
+            return () => {
+                if (muted || !audioCtx) return;
+                
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(900, audioCtx.currentTime + 0.3);
+                
+                gainNode.gain.value = 0.1;
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                
+                setTimeout(() => {
+                    oscillator.stop();
+                }, 300);
+            };
+        }
+
+        function createIntroSound() {
+            return () => {
+                if (muted || !audioCtx) return;
+                
+                const notes = [330, 294, 262, 294, 330, 330, 330, 294, 294, 294, 330, 392, 392];
+                const durations = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.4, 0.2, 0.2, 0.4, 0.2, 0.2, 0.4];
+                
+                let time = audioCtx.currentTime;
+                
+                for (let i = 0; i < notes.length; i++) {
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    
+                    oscillator.type = 'square';
+                    oscillator.frequency.value = notes[i];
+                    
+                    gainNode.gain.value = 0.1;
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    
+                    oscillator.start(time);
+                    oscillator.stop(time + durations[i]);
+                    
+                    time += durations[i];
+                }
+            };
+        }
+
+        function playSound(soundFunction) {
+            if (!muted && audioCtx) {
+                soundFunction();
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            update();
+            draw();
+            
+            frameCount++;
+            
+            // Animate pac-man mouth opening and closing
+            if (frameCount % 10 === 0) {
+                pacman.mouthOpen = !pacman.mouthOpen;
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Update game state
+        function update() {
+            movePacman();
+            moveGhosts();
+            checkCollisions();
+            
+            // Check if all dots are eaten
+            if (dots.length === 0 && powerDots.length === 0) {
+                // Level complete!
+                gameRunning = false;
+                setTimeout(() => {
+                    initGame();
+                }, 2000);
+            }
+        }
+        
+        // Move Pac-Man based on current direction
+        function movePacman() {
+            let newX = pacman.x;
+            let newY = pacman.y;
+            
+            switch (pacman.direction) {
+                case 'right':
+                    newX += pacman.speed;
+                    pacman.angle = 0;
+                    break;
+                case 'left':
+                    newX -= pacman.speed;
+                    pacman.angle = Math.PI;
+                    break;
+                case 'up':
+                    newY -= pacman.speed;
+                    pacman.angle = Math.PI * 1.5;
+                    break;
+                case 'down':
+                    newY += pacman.speed;
+                    pacman.angle = Math.PI * 0.5;
+                    break;
+            }
+            
+            // Check wall collision
+            const pacmanRadius = pacman.radius;
+            let collides = false;
+            
+            for (const wall of walls) {
+                if (
+                    newX + pacmanRadius > wall.x &&
+                    newX - pacmanRadius < wall.x + wall.width &&
+                    newY + pacmanRadius > wall.y &&
+                    newY - pacmanRadius < wall.y + wall.height
+                ) {
+                    collides = true;
+                    break;
+                }
+            }
+            
+            // Update position if no collision
+            if (!collides) {
+                pacman.x = newX;
+                pacman.y = newY;
+            }
+            
+            // Wrap around the screen
+            if (pacman.x < 0) pacman.x = canvas.width;
+            if (pacman.x > canvas.width) pacman.x = 0;
+            if (pacman.y < 0) pacman.y = canvas.height;
+            if (pacman.y > canvas.height) pacman.y = 0;
+        }
+        
+        // Move ghosts
+        function moveGhosts() {
+            ghosts.forEach((ghost, index) => {
+                // Determine ghost behavior based on mode
+                if (ghost.mode === 'scatter') {
+                    // Move randomly in scatter mode
+                    if (Math.random() < 0.05) {
+                        const directions = ['up', 'down', 'left', 'right'];
+                        ghost.direction = directions[Math.floor(Math.random() * directions.length)];
+                    }
+                } else {
+                    // Chase Pac-Man in chase mode
+                    const dx = pacman.x - ghost.x;
+                    const dy = pacman.y - ghost.y;
+                    
+                    // Determine preferred direction based on Pac-Man position
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        ghost.direction = dx > 0 ? 'right' : 'left';
+                    } else {
+                        ghost.direction = dy > 0 ? 'down' : 'up';
+                    }
+                }
+                
+                // Adjust speed based on power mode
+                const currentSpeed = powerMode ? ghost.speed * 0.5 : ghost.speed;
+                
+                // Calculate new position
+                let newX = ghost.x;
+                let newY = ghost.y;
+                
+                switch (ghost.direction) {
+                    case 'right':
+                        newX += currentSpeed;
+                        break;
+                    case 'left':
+                        newX -= currentSpeed;
+                        break;
+                    case 'up':
+                        newY -= currentSpeed;
+                        break;
+                    case 'down':
+                        newY += currentSpeed;
+                        break;
+                }
+                
+                // Check wall collision
+                const ghostRadius = ghost.radius;
+                let collides = false;
+                
+                for (const wall of walls) {
+                    if (
+                        newX + ghostRadius > wall.x &&
+                        newX - ghostRadius < wall.x + wall.width &&
+                        newY + ghostRadius > wall.y &&
+                        newY - ghostRadius < wall.y + wall.height
+                    ) {
+                        collides = true;
+                        break;
+                    }
+                }
+                
+                // Update position if no collision, otherwise change direction
+                if (!collides) {
+                    ghost.x = newX;
+                    ghost.y = newY;
+                } else {
+                    const directions = ['up', 'down', 'left', 'right'];
+                    const currentDirection = ghost.direction;
+                    const oppositeDirection = {
+                        'up': 'down',
+                        'down': 'up',
+                        'left': 'right',
+                        'right': 'left'
+                    };
+                    
+                    // Filter out current direction and opposite direction
+                    const availableDirections = directions.filter(dir => 
+                        dir !== currentDirection && 
+                        dir !== oppositeDirection[currentDirection]
+                    );
+                    
+                    ghost.direction = availableDirections[Math.floor(Math.random() * availableDirections.length)];
+                }
+                
+                // Wrap around the screen
+                if (ghost.x < 0) ghost.x = canvas.width;
+                if (ghost.x > canvas.width) ghost.x = 0;
+                if (ghost.y < 0) ghost.y = canvas.height;
+                if (ghost.y > canvas.height) ghost.y = 0;
+            });
+        }
+        
+        // Check collisions with dots, power dots, and ghosts
+        function checkCollisions() {
+            // Check dot collisions
+            for (let i = dots.length - 1; i >= 0; i--) {
+                const dot = dots[i];
+                const distance = Math.sqrt(
+                    Math.pow(pacman.x - dot.x, 2) + 
+                    Math.pow(pacman.y - dot.y, 2)
+                );
+                
+                if (distance < pacman.radius + dot.radius) {
+                    dots.splice(i, 1);
+                    score += 10;
+                    scoreElement.textContent = score;
+                    playSound(munchSound);
+                }
+            }
+            
+            // Check power dot collisions
+            for (let i = powerDots.length - 1; i >= 0; i--) {
+                const powerDot = powerDots[i];
+                const distance = Math.sqrt(
+                    Math.pow(pacman.x - powerDot.x, 2) + 
+                    Math.pow(pacman.y - powerDot.y, 2)
+                );
+                
+                if (distance < pacman.radius + powerDot.radius) {
+                    powerDots.splice(i, 1);
+                    score += 50;
+                    scoreElement.textContent = score;
+                    
+                    // Activate power mode
+                    powerMode = true;
+                    playSound(powerSound);
+                    
+                    // Clear previous timer if exists
+                    if (powerModeTimer) clearTimeout(powerModeTimer);
+                    
+                    // Set timer to end power mode
+                    powerModeTimer = setTimeout(() => {
+                        powerMode = false;
+                    }, 7000);
+                }
+            }
+            
+            // Check ghost collisions
+            for (let i = ghosts.length - 1; i >= 0; i--) {
+                const ghost = ghosts[i];
+                const distance = Math.sqrt(
+                    Math.pow(pacman.x - ghost.x, 2) + 
+                    Math.pow(pacman.y - ghost.y, 2)
+                );
+                
+                if (distance < pacman.radius + ghost.radius) {
+                    if (powerMode) {
+                        // Eat ghost
+                        ghost.x = canvas.width / 2;
+                        ghost.y = canvas.height / 2;
+                        score += 200;
+                        scoreElement.textContent = score;
+                        playSound(ghostEatSound);
+                    } else {
+                        // Die
+                        lives--;
+                        livesElement.textContent = lives;
+                        playSound(deathSound);
+                        
+                        if (lives <= 0) {
+                            gameOver();
+                        } else {
+                            // Reset positions
+                            resetPositions();
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Reset positions after losing a life
+        function resetPositions() {
+            pacman.x = CELL_SIZE * 1.5;
+            pacman.y = CELL_SIZE * 1.5;
+            pacman.direction = 'right';
+            pacman.angle = 0;
+            
+            ghosts.forEach((ghost, index) => {
+                ghost.x = CELL_SIZE * 9.5;
+                ghost.y = CELL_SIZE * 9.5 + index * CELL_SIZE;
+            });
+            
+            // Pause briefly
+            gameRunning = false;
+            setTimeout(() => {
+                gameRunning = true;
+                gameLoop();
+            }, 1000);
+        }
+        
+        // Game over
+        function gameOver() {
+            gameRunning = false;
+            gameOverElement.style.display = 'block';
+            startButton.style.display = 'block';
+        }
+        
+        // Draw game elements
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw walls
+            ctx.fillStyle = '#2121DE';
+            walls.forEach(wall => {
+                ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
+            });
+            
+            // Draw dots
+            ctx.fillStyle = '#ffffff';
+            dots.forEach(dot => {
+                ctx.beginPath();
+                ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Draw power dots (with pulsing effect)
+            ctx.fillStyle = '#ffffff';
+            powerDots.forEach(powerDot => {
+                ctx.beginPath();
+                // Add pulsing effect
+                const pulseSize = Math.sin(frameCount * 0.1) * 2;
+                ctx.arc(powerDot.x, powerDot.y, powerDot.radius + pulseSize, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Draw Pacman
+            ctx.fillStyle = '#FFFF00';
+            ctx.beginPath();
+            
+            if (pacman.mouthOpen) {
+                ctx.arc(
+                    pacman.x, 
+                    pacman.y, 
+                    pacman.radius, 
+                    pacman.angle + pacman.mouthAngle, 
+                    pacman.angle + Math.PI * 2 - pacman.mouthAngle
+                );
+            } else {
+                ctx.arc(
+                    pacman.x, 
+                    pacman.y, 
+                    pacman.radius, 
+                    0, 
+                    Math.PI * 2
+                );
+            }
+            
+            ctx.lineTo(pacman.x, pacman.y);
+            ctx.fill();
+            
+            // Draw ghosts
+            ghosts.forEach(ghost => {
+                // Set ghost color based on power mode
+                ctx.fillStyle = powerMode ? '#2121DE' : ghost.color;
+                
+                // Draw ghost body
+                ctx.beginPath();
+                ctx.arc(ghost.x, ghost.y, ghost.radius, Math.PI, 0, false);
+                
+                // Draw the base of the ghost (zigzag bottom)
+                const baseY = ghost.y + ghost.radius;
+                const zigzagWidth = ghost.radius / 2;
+                
+                ctx.lineTo(ghost.x + ghost.radius, baseY);
+                
+                for (let i = 0; i < 3; i++) {
+                    ctx.lineTo(ghost.x + ghost.radius - zigzagWidth * (i + 1/3), baseY + ((i % 2) * zigzagWidth));
+                }
+                
+                for (let i = 0; i < 3; i++) {
+                    ctx.lineTo(ghost.x - ghost.radius + zigzagWidth * (i + 1/3), baseY + ((i % 2) * zigzagWidth));
+                }
+                
+                ctx.lineTo(ghost.x - ghost.radius, baseY);
+                ctx.lineTo(ghost.x - ghost.radius, ghost.y);
+                ctx.fill();
+                
+                // Draw ghost eyes
+                const eyeRadius = ghost.radius / 3;
+                const eyeOffsetX = ghost.radius / 2;
+                const eyeOffsetY = -ghost.radius / 5;
+                
+                // Eye whites
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(ghost.x - eyeOffsetX, ghost.y + eyeOffsetY, eyeRadius, 0, Math.PI * 2);
+                ctx.arc(ghost.x + eyeOffsetX, ghost.y + eyeOffsetY, eyeRadius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Eye pupils (looking in the direction of movement)
+                let pupilOffsetX = 0;
+                let pupilOffsetY = 0;
+                
+                switch (ghost.direction) {
+                    case 'right':
+                        pupilOffsetX = eyeRadius / 2;
+                        break;
+                    case 'left':
+                        pupilOffsetX = -eyeRadius / 2;
+                        break;
+                    case 'up':
+                        pupilOffsetY = -eyeRadius / 2;
+                        break;
+                    case 'down':
+                        pupilOffsetY = eyeRadius / 2;
+                        break;
+                }
+                
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(
+                    ghost.x - eyeOffsetX + pupilOffsetX, 
+                    ghost.y + eyeOffsetY + pupilOffsetY, 
+                    eyeRadius / 2, 
+                    0, 
+                    Math.PI * 2
+                );
+                ctx.arc(
+                    ghost.x + eyeOffsetX + pupilOffsetX, 
+                    ghost.y + eyeOffsetY + pupilOffsetY, 
+                    eyeRadius / 2, 
+                    0, 
+                    Math.PI * 2
+                );
+                ctx.fill();
+            });
+        }
+        
+        // Handle keyboard input
+        const keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false,
+            w: false,
+            a: false,
+            s: false,
+            d: false
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key in keys) {
+                keys[e.key] = true;
+                
+                // Set direction based on key
+                if (e.key === 'ArrowUp' || e.key === 'w') {
+                    pacman.direction = 'up';
+                } else if (e.key === 'ArrowDown' || e.key === 's') {
+                    pacman.direction = 'down';
+                } else if (e.key === 'ArrowLeft' || e.key === 'a') {
+                    pacman.direction = 'left';
+                } else if (e.key === 'ArrowRight' || e.key === 'd') {
+                    pacman.direction = 'right';
+                }
+            }
+            
+            // Mute/unmute sounds with 'm' key
+            if (e.key === 'm') {
+                muted = !muted;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key in keys) {
+                keys[e.key] = false;
+            }
+        });
+
+        // Start game when button is clicked
+        startButton.addEventListener('click', () => {
+            // Initialize audio context on first click (to handle autoplay policy)
+            if (!audioCtx) {
+                setupAudio();
+            } else if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            startButton.style.display = 'none';
+            initGame();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            // Optional: Adjust canvas size if needed
+        });
+
+        // Initialize with start button visible
+        gameRunning = false;
+        startButton.style.display = 'block';

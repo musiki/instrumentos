@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FM Synth and Moving Circle with Panning</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #1e1e1e;
+        color: white;
+      }
+      #fm-container {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin: 10px 0 5px;
+      }
+      input[type="range"] {
+        width: 200px;
+        margin: 10px 0;
+      }
+      #circle-container {
+        position: relative;
+        width: 300px;
+        height: 300px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        margin-top: 20px;
+      }
+      #circle {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #00ff00;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      #toggle-btn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #00ff00;
+        color: black;
+        border: none;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="fm-container">
+      <label for="rise">Rise (LFO Speed)</label>
+      <input type="range" id="rise" min="0" max="1" step="0.01" value="0.5" />
+      <label for="fall">Fall (LFO Speed)</label>
+      <input type="range" id="fall" min="0" max="1" step="0.01" value="0.5" />
+      <label for="freq">Fundamental Frequency</label>
+      <input type="range" id="freq" min="10" max="1000" step="1" value="440" />
+      <label for="modDepth">FM Modulation Depth</label>
+      <input
+        type="range"
+        id="modDepth"
+        min="0"
+        max="1"
+        step="0.01"
+        value="0.5"
+      />
+    </div>
+
+    <div id="circle-container">
+      <div id="circle"></div>
+    </div>
+
+    <button id="toggle-btn">Toggle Circle Motion</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.8.39/build/Tone.js"></script>
+    <script>
+      let audioContextInitialized = false;
+
+      // Web Audio API setup
+      const audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+      const gainNode = audioContext.createGain();
+      const modulator = audioContext.createOscillator();
+      const carrier = audioContext.createOscillator();
+      const modDepthControl = document.getElementById("modDepth");
+      const freqControl = document.getElementById("freq");
+      const riseControl = document.getElementById("rise");
+      const fallControl = document.getElementById("fall");
+
+      // LFO for modulation
+      const riseLFO = audioContext.createOscillator();
+      const fallLFO = audioContext.createOscillator();
+      const modDepthGain = audioContext.createGain();
+
+      modDepthGain.gain.value = modDepthControl.value;
+      riseLFO.frequency.value = 0.5; // Rise LFO frequency (controls modulation speed)
+      fallLFO.frequency.value = 0.5; // Fall LFO frequency (controls modulation speed)
+
+      modulator.type = "sine";
+      carrier.type = "sine";
+
+      modulator.frequency.value = 2; // Modulator LFO frequency
+      carrier.frequency.value = freqControl.value; // Carrier frequency (fundamental)
+
+      // StereoPannerNode for panning
+      const panner = audioContext.createStereoPanner();
+      panner.pan.value = 0; // Initial pan (center)
+
+      // Connecting modulator to modulation depth
+      modulator.connect(modDepthGain);
+      modDepthGain.connect(carrier.frequency);
+
+      // Connect LFOs to modulator frequency
+      riseLFO.connect(modulator.frequency);
+      fallLFO.connect(modulator.frequency);
+
+      // Gain node to control output volume
+      carrier.connect(gainNode);
+      gainNode.connect(panner); // Connect to panner instead of directly to the output
+      panner.connect(audioContext.destination); // Connect panner to destination
+
+      // Update LFO speed based on user input (Rise and Fall control)
+      riseControl.addEventListener("input", (event) => {
+        riseLFO.frequency.value = event.target.value; // Update rise LFO frequency dynamically
+      });
+
+      fallControl.addEventListener("input", (event) => {
+        fallLFO.frequency.value = event.target.value; // Update fall LFO frequency dynamically
+      });
+
+      // Handle frequency control
+      freqControl.addEventListener("input", (event) => {
+        carrier.frequency.value = event.target.value; // Update fundamental frequency of the carrier dynamically
+      });
+
+      // Handle modulation depth control
+      modDepthControl.addEventListener("input", (event) => {
+        modDepthGain.gain.value = event.target.value; // Update FM modulation depth dynamically
+      });
+
+      // Handle panning control based on the green ball (circle) X-axis
+      const updatePanning = () => {
+        // Map X position of the circle to panning (-1 left, 1 right)
+        const panValue = (x / 300) * 2 - 1; // X from 0 to 300 maps to -1 to 1
+        panner.pan.value = panValue;
+      };
+
+      // Initialize AudioContext with user interaction
+      const initAudioContext = () => {
+        if (!audioContextInitialized) {
+          audioContext.resume().then(() => {
+            carrier.start();
+            modulator.start();
+            riseLFO.start();
+            fallLFO.start();
+            audioContextInitialized = true;
+          });
+        }
+      };
+
+      // Circle movement setup
+      const circle = document.getElementById("circle");
+      const toggleBtn = document.getElementById("toggle-btn");
+      let isMoving = false;
+      let x = 150,
+        y = 150; // Initial position of the circle
+
+      // Function to update audio based on circle position
+      let updateAudioFromCircle = () => {
+        // Map X position to FM carrier frequency (fundamental frequency: 100 - 1000 Hz)
+        const freq = Math.max(100, Math.min(1000, (x / 300) * 1000));
+        carrier.frequency.value = freq;
+
+        // Map Y position to modulation depth (range: 0 - 1)
+        const modDepth = y / 300;
+        modDepthGain.gain.value = modDepth;
+
+        // Update panning based on circle's X-axis
+        updatePanning();
+
+        // Continuously update circle position and associated audio params
+        if (isMoving) {
+          x += Math.sin(Date.now() / 1000) * 50;
+          y += Math.cos(Date.now() / 1000) * 50;
+
+          if (x < 0) x = 300;
+          if (x > 300) x = 0;
+          if (y < 0) y = 300;
+          if (y > 300) y = 0;
+
+          circle.style.left = `${x}px`;
+          circle.style.top = `${y}px`;
+
+          requestAnimationFrame(updateAudioFromCircle);
+        }
+      };
+
+      toggleBtn.addEventListener("click", () => {
+        initAudioContext(); // Start AudioContext on button click
+        isMoving = !isMoving;
+        if (isMoving) {
+          updateAudioFromCircle();
+        }
+      });
+    </script>
+  </body>
+</html>

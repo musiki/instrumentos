@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebAudio + Canvas</title>
+    <style>
+      body {
+        background-color: black;
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 0;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+      }
+      button {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 18px;
+        padding: 10px 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <button id="start-button">Reproducir</button>
+    <script>
+      // 🛠 Configuración inicial
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const button = document.getElementById("start-button");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      // 🎛 Variables de sonido
+      let audioContext;
+      let masterGain;
+      const duracion = 5; // Duración total en segundos
+      const fadeOutTime = 2; // Tiempo de fundido de salida
+      const cantidad = 1; // Cambiar a más para versión avanzada
+      const notaDeInicio = 200; // Frecuencia inicial
+      const notaDeLlegada = 600; // Frecuencia final
+      const oscillators = [];
+      const gainNodes = [];
+      const panNodes = [];
+
+      // 🔵 Variables de visualización
+      const circles = [];
+
+      // 🔹 Función para iniciar AudioContext
+      function initAudio() {
+        if (!audioContext) {
+          audioContext = new AudioContext();
+          masterGain = new GainNode(audioContext);
+          masterGain.gain.setValueAtTime(1, audioContext.currentTime);
+          masterGain.connect(audioContext.destination);
+        }
+      }
+
+      // 🔊 Función para crear y controlar el sonido
+      function playDeepNote() {
+        initAudio();
+        button.disabled = true; // Desactiva el botón mientras suena
+
+        for (let i = 0; i < cantidad; i++) {
+          const osc = new OscillatorNode(audioContext, { type: "sawtooth" });
+          const gain = new GainNode(audioContext);
+          const pan = new StereoPannerNode(audioContext);
+
+          // Configuración inicial de frecuencia y volumen
+          osc.frequency.setValueAtTime(notaDeInicio, audioContext.currentTime);
+          gain.gain.setValueAtTime(0.125, audioContext.currentTime);
+
+          // Transición hacia la nota final
+          osc.frequency.exponentialRampToValueAtTime(
+            notaDeLlegada,
+            audioContext.currentTime + duracion
+          );
+          pan.pan.setValueAtTime(
+            Math.random() * 2 - 1,
+            audioContext.currentTime
+          );
+
+          // Conexiones
+          osc.connect(gain).connect(pan).connect(masterGain);
+
+          // Fundido de salida
+          gain.gain.setValueAtTime(
+            0.125,
+            audioContext.currentTime + duracion - fadeOutTime
+          );
+          gain.gain.linearRampToValueAtTime(
+            0,
+            audioContext.currentTime + duracion
+          );
+
+          // Guardamos referencias
+          oscillators.push(osc);
+          gainNodes.push(gain);
+          panNodes.push(pan);
+
+          // Inicia el oscilador
+          osc.start();
+          osc.stop(audioContext.currentTime + duracion);
+
+          // Agregar círculo visual
+          const x = (pan.pan.value + 1) * (canvas.width / 2);
+          circles.push({
+            x,
+            y: canvas.height / 2,
+            size: notaDeInicio / 10,
+            opacity: 1,
+          });
+        }
+
+        animate();
+      }
+
+      // 🎨 Función de animación de círculos
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        circles.forEach((circle, i) => {
+          ctx.beginPath();
+          ctx.arc(circle.x, circle.y, circle.size, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(255, 255, 255, ${circle.opacity})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Relaciona la opacidad con la ganancia del sonido
+          if (gainNodes[i]) {
+            circle.opacity = gainNodes[i].gain.value;
+          }
+        });
+
+        // Si aún hay sonido, sigue la animación
+        if (circles.some((c) => c.opacity > 0)) {
+          requestAnimationFrame(animate);
+        } else {
+          button.disabled = false; // Reactiva el botón cuando termina el sonido
+        }
+      }
+
+      // 🎛 Evento para iniciar el sonido
+      button.addEventListener("click", playDeepNote);
+    </script>
+  </body>
+</html>

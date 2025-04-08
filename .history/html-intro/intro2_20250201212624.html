@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fader Volumen</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: black;
+      }
+
+      input[type="range"] {
+        width: 50%;
+        -webkit-appearance: none;
+        appearance: none;
+        background: white;
+        height: 10px;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <input type="range" id="fader" min="0" max="1" step="0.01" />
+    <script>
+      let context = new (window.AudioContext || window.webkitAudioContext)();
+      let osc = context.createOscillator();
+      let gainNode = context.createGain();
+      osc.connect(gainNode).connect(context.destination);
+      osc.start();
+      gainNode.gain.value = 0;
+
+      const fader = document.getElementById("fader");
+
+      fader.addEventListener("input", () => {
+        gainNode.gain.value = fader.value;
+      });
+
+      fader.addEventListener("change", () => {
+        if (fader.value == 0) {
+          osc.stop();
+          osc = context.createOscillator();
+          osc.connect(gainNode).connect(context.destination);
+          osc.start();
+        }
+      });
+    </script>
+  </body>
+</html>

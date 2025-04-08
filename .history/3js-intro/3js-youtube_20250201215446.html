@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stable YouTube Video Texture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: black;
+      }
+      iframe {
+        position: absolute;
+        top: -1000px;
+        left: -1000px;
+        width: 640px;
+        height: 360px;
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe
+      id="youtube-player"
+      src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?enablejsapi=1&autoplay=1&controls=0&mute=1&loop=1&playlist=dQw4w9WgXcQ"
+    ></iframe>
+
+    <script>
+      let scene, camera, renderer, video, texture, material, mesh;
+
+      const videoCodes = [
+        "dQw4w9WgXcQ", // Rick Astley - Never Gonna Give You Up
+        "3JZ_D3ELwOQ", // Bohemian Rhapsody - Queen
+        "LXb3EKWsInQ", // Relaxing nature video
+        "kJQP7kiw5Fk", // Despacito
+        "9bZkp7q19f0", // Gangnam Style
+      ];
+
+      function getRandomVideo() {
+        return videoCodes[Math.floor(Math.random() * videoCodes.length)];
+      }
+
+      function setupYouTubeAPI() {
+        const iframe = document.getElementById("youtube-player");
+
+        // Notify YouTube API that we are listening
+        iframe.contentWindow.postMessage('{"event": "listening"}', "*");
+
+        // Set up event listener for messages from YouTube
+        window.addEventListener("message", (event) => {
+          if (event.data && event.data.event === "infoDelivery") {
+            const state = event.data.info?.playerState;
+
+            if (state === 2) {
+              console.log("Video paused");
+            } else if (state === 1) {
+              console.log("Video playing");
+            }
+          }
+        });
+
+        return iframe;
+      }
+
+      function setupThreeJS(videoElement) {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(
+          75,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000
+        );
+        camera.position.z = 5;
+
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        texture = new THREE.VideoTexture(videoElement);
+        material = new THREE.MeshBasicMaterial({ map: texture });
+
+        const geometry = new THREE.PlaneGeometry(4, 2.5);
+        mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        animate();
+
+        renderer.domElement.addEventListener("click", changeVideo);
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+        mesh.rotation.y += 0.001;
+        renderer.render(scene, camera);
+      }
+
+      function changeVideo() {
+        const newVideoId = getRandomVideo();
+        const iframe = document.getElementById("youtube-player");
+        iframe.src = `https://www.youtube-nocookie.com/embed/${newVideoId}?enablejsapi=1&autoplay=1&controls=0&mute=1&loop=1&playlist=${newVideoId}`;
+      }
+
+      window.onload = () => {
+        const youtubeIframe = setupYouTubeAPI();
+        setupThreeJS(youtubeIframe);
+      };
+    </script>
+  </body>
+</html>

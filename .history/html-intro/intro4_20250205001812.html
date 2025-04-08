@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recursive Harmonic Gliss</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: black;
+        overflow: hidden;
+      }
+      #circle {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: grey;
+        position: absolute;
+        cursor: grab;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="circle"></div>
+    <script>
+      let context;
+      let carrier, modulator, modGain, gainNode;
+      let isDragging = false;
+      let baseFreq = 100; // Starting fundamental
+      let harmonicIndex = 0;
+      let isStarted = false;
+      let stopRequested = false;
+      let yPosition = window.innerHeight;
+      const circle = document.getElementById("circle");
+
+      function generateHarmonics(baseFreq) {
+        let harmonics = [];
+        let currentBase = baseFreq;
+        for (let i = 0; i < 5; i++) {
+          harmonics.push(currentBase); // Store current base
+          currentBase *= 2 ** (10 / 12); // Minor 7th jump
+          harmonics.push(currentBase); // Store it
+          currentBase *= 2; // Move to next odd harmonic
+        }
+        return harmonics;
+      }
+
+      let harmonics = generateHarmonics(baseFreq);
+
+      function initAudio() {
+        if (!context) {
+          context = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (context.state === "suspended") {
+          context.resume();
+        }
+        if (!isStarted) {
+          startSynth();
+          isStarted = true;
+        }
+      }
+
+      function startSynth() {
+        stopRequested = false;
+        carrier = context.createOscillator();
+        modulator = context.createOscillator();
+        modGain = context.createGain();
+        gainNode = context.createGain();
+
+        modulator.connect(modGain);
+        modGain.connect(carrier.frequency);
+        carrier.connect(gainNode);
+        gainNode.connect(context.destination);
+
+        gainNode.gain.setValueAtTime(0, context.currentTime);
+        gainNode.gain.linearRampToValueAtTime(1, context.currentTime + 0.1);
+
+        carrier.start();
+        modulator.start();
+
+        startGlissando();
+      }
+
+      function startGlissando() {
+        if (stopRequested) return;
+
+        let nextHarmonic = harmonics[harmonicIndex];
+        let glideTime = Math.exp((-yPosition / window.innerHeight) * 5) * 1.5;
+
+        carrier.frequency.setTargetAtTime(
+          nextHarmonic,
+          context.currentTime,
+          glideTime
+        );
+
+        harmonicIndex++;
+
+        if (harmonicIndex >= harmonics.length) {
+          harmonicIndex = 0;
+          baseFreq *= 2; // Update base dynamically
+          harmonics = generateHarmonics(baseFreq); // Generate new harmonic series
+        }
+
+        setTimeout(startGlissando, glideTime * 1000);
+      }
+
+      function updateFM(x, y) {
+        yPosition = y;
+        let modFreq = (x / window.innerWidth) * 500 + 50;
+        modulator.frequency.setTargetAtTime(modFreq, context.currentTime, 0.05);
+        modGain.gain.setTargetAtTime(100, context.currentTime, 0.05);
+      }
+
+      function stopSynth() {
+        stopRequested = true;
+        if (gainNode) {
+          gainNode.gain.cancelScheduledValues(context.currentTime);
+          gainNode.gain.setTargetAtTime(0, context.currentTime, 0.2);
+          setTimeout(() => {
+            carrier.stop();
+            modulator.stop();
+            carrier = null;
+            modulator = null;
+            isStarted = false;
+          }, 300);
+        }
+      }
+
+      circle.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        circle.style.backgroundColor = "red";
+        initAudio();
+        updateFM(e.clientX, e.clientY);
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (isDragging) {
+          circle.style.left = `${e.clientX - 50}px`;
+          circle.style.top = `${e.clientY - 50}px`;
+          updateFM(e.clientX, e.clientY);
+        }
+      });
+
+      document.addEventListener("mouseup", () => {
+        if (isDragging) {
+          isDragging = false;
+          circle.style.backgroundColor = "grey";
+          stopSynth();
+        }
+      });
+    </script>
+  </body>
+</html>

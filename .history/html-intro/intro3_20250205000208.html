@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FM Synth</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: black;
+        overflow: hidden;
+      }
+
+      #circle {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: grey;
+        position: absolute;
+        cursor: grab;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="circle"></div>
+    <script>
+      let context = new (window.AudioContext || window.webkitAudioContext)();
+      let carrier, modulator, modGain, globalGain;
+      let isDragging = false;
+      let lastX = 0,
+        lastY = 0; // Store the last mouse position
+      let originalVolume = 1; // Variable to store the original volume
+      const circle = document.getElementById("circle");
+
+      // Initialize the global gain node
+      globalGain = context.createGain();
+      globalGain.connect(context.destination);
+      globalGain.gain.setValueAtTime(1, context.currentTime); // Start at full volume
+
+      function startFM(x, y) {
+        if (!carrier) {
+          carrier = context.createOscillator();
+          modulator = context.createOscillator();
+          modGain = context.createGain();
+
+          modulator.connect(modGain);
+          modGain.connect(carrier.frequency);
+          carrier.connect(globalGain); // Connect to the global gain node
+
+          modulator.start();
+          carrier.start();
+        }
+
+        updateFM(x, y);
+      }
+
+      function updateFM(x, y) {
+        if (carrier && modulator) {
+          lastX = x; // Update last values on mouse move
+          lastY = y;
+
+          let carrierFreq = (x / window.innerWidth) * 1000 + 200; // Mapea X a la frecuencia de la portadora
+          let modFreq = (y / window.innerHeight) * 500 + 50; // Mapea Y a la frecuencia modulante
+
+          carrier.frequency.setTargetAtTime(
+            carrierFreq,
+            context.currentTime,
+            0.05
+          );
+          modulator.frequency.setTargetAtTime(
+            modFreq,
+            context.currentTime,
+            0.05
+          );
+          modGain.gain.setTargetAtTime(100, context.currentTime, 0.05);
+        }
+      }
+
+      function stopFM() {
+        if (carrier && modulator) {
+          // Store the original volume
+          originalVolume = globalGain.gain.value;
+
+          // Fade out the global gain node over 300ms
+          globalGain.gain.linearRampToValueAtTime(0, context.currentTime + 0.3); // Ramp to 0 in 300ms
+
+          // Stop the oscillators after the fade-out
+          setTimeout(() => {
+            carrier.stop();
+            modulator.stop();
+            carrier = null;
+            modulator = null;
+
+            // Reset volume to the original value
+            globalGain.gain.setValueAtTime(originalVolume, context.currentTime);
+          }, 300); // Ensure we stop after fade-out
+        }
+      }
+
+      circle.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        circle.style.backgroundColor = "red";
+        startFM(e.clientX, e.clientY);
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (isDragging) {
+          circle.style.left = `${e.clientX - 50}px`;
+          circle.style.top = `${e.clientY - 50}px`;
+          updateFM(e.clientX, e.clientY);
+        }
+      });
+
+      document.addEventListener("mouseup", () => {
+        if (isDragging) {
+          isDragging = false;
+          circle.style.backgroundColor = "grey";
+          stopFM();
+        }
+      });
+    </script>
+  </body>
+</html>

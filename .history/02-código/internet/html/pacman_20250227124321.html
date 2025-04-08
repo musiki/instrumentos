@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pac-Man 3D</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        canvas {
+            display: block;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <script type="module">
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Pac-Man
+        const pacmanGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+        const pacmanMaterial = new THREE.MeshPhongMaterial({ color: 0xffff00 });
+        const pacman = new THREE.Mesh(pacmanGeometry, pacmanMaterial);
+        scene.add(pacman);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+        pointLight.position.set(0, 10, 10);
+        scene.add(pointLight);
+
+        // Maze setup
+        const wallMaterial = new THREE.MeshPhongMaterial({ color: 0x0000ff });
+        const maze = [];
+        const mazeLayout = [
+            [1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,1,0,0,0,0,1],
+            [1,0,1,0,1,0,1,1,0,1],
+            [1,0,1,0,0,0,0,1,0,1],
+            [1,0,1,1,1,1,0,1,0,1],
+            [1,0,0,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        // Create maze walls
+        for (let y = 0; y < mazeLayout.length; y++) {
+            for (let x = 0; x < mazeLayout[y].length; x++) {
+                if (mazeLayout[y][x] === 1) {
+                    const wallGeometry = new THREE.BoxGeometry(1, 1, 1);
+                    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+                    wall.position.set(x - 4.5, 0, y - 3);
+                    scene.add(wall);
+                    maze.push(wall);
+                }
+            }
+        }
+
+        // Dots (collectibles)
+        const dots = [];
+        const dotGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+        const dotMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+        for (let y = 0; y < mazeLayout.length; y++) {
+            for (let x = 0; x < mazeLayout[y].length; x++) {
+                if (mazeLayout[y][x] === 0) {
+                    const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+                    dot.position.set(x - 4.5, 0, y - 3);
+                    scene.add(dot);
+                    dots.push(dot);
+                }
+            }
+        }
+
+        // Camera position
+        camera.position.set(0, 10, 5);
+        camera.lookAt(0, 0, 0);
+
+        // Movement variables
+        let velocity = new THREE.Vector3();
+        const speed = 0.1;
+        let score = 0;
+        const scoreElement = document.getElementById('score');
+
+        // Controls
+        const keys = {};
+        document.addEventListener('keydown', (e) => keys[e.key] = true);
+        document.addEventListener('keyup', (e) => keys[e.key] = false);
+
+        // Collision detection
+        function checkCollision(newPosition) {
+            const pacmanBox = new THREE.Box3().setFromObject(pacman);
+            pacmanBox.min.set(newPosition.x - 0.5, -0.5, newPosition.z - 0.5);
+            pacmanBox.max.set(newPosition.x + 0.5, 0.5, newPosition.z + 0.5);
+
+            for (let wall of maze) {
+                const wallBox = new THREE.Box3().setFromObject(wall);
+                if (pacmanBox.intersectsBox(wallBox)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Movement
+            velocity.set(0, 0, 0);
+            if (keys['ArrowUp'] || keys['w']) velocity.z = -speed;
+            if (keys['ArrowDown'] || keys['s']) velocity.z = speed;
+            if (keys['ArrowLeft'] || keys['a']) velocity.x = -speed;
+            if (keys['ArrowRight'] || keys['d']) velocity.x = speed;
+
+            const newPosition = pacman.position.clone().add(velocity);
+            if (!checkCollision(newPosition)) {
+                pacman.position.copy(newPosition);
+            }
+
+            // Collect dots
+            for (let i = dots.length - 1; i >= 0; i--) {
+                const dot = dots[i];
+                if (pacman.position.distanceTo(dot.position) < 0.6) {
+                    scene.remove(dot);
+                    dots.splice(i, 1);
+                    score += 10;
+                    scoreElement.textContent = `Score: ${score}`;
+                }
+            }
+
+            // Pac-Man animation (open/close mouth effect)
+            pacman.rotation.y += 0.1;
+
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

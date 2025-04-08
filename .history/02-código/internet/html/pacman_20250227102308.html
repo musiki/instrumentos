@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pac-Man Game</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+      }
+      canvas {
+        display: block;
+      }
+      #instructions {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: #333;
+        font-size: 14px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 10px;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="instructions">
+      Use arrow keys to move Pac-Man<br />
+      Click/mouse to turn and shoot<br />
+      Press spacebar to eat dots
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+      // Three.js initialization
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // Game objects
+      const pacman = new THREE.Mesh();
+      pacman.rotation.y = Math.PI / 2;
+      pacman.position.set(0, 0, -5);
+      pacman.material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+
+      // Create dots
+      const dots = [];
+      for (let i = -5; i <= 5; i += 2) {
+        for (let j = -5; j <= 5; j += 2) {
+          const dot = new THREE.Mesh();
+          dot.position.set(i, j, -5);
+          dot.material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+          scene.add(dot);
+          dots.push({
+            mesh: dot,
+            position: new THREE.Vector3(i, j, -5),
+          });
+        }
+      }
+
+      // Create ghosts
+      const ghosts = [];
+      for (let i = 0; i < 4; i++) {
+        const ghost = new THREE.Mesh();
+        ghost.position.set(Math.random() * 10 - 5, Math.random() * 10 - 5, -5);
+        ghost.material = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+        scene.add(ghost);
+        ghosts.push({
+          mesh: ghost,
+          position: new THREE.Vector3(
+            Math.random() * 10 - 5,
+            Math.random() * 10 - 5,
+            -5
+          ),
+        });
+      }
+
+      // Create maze structure
+      const walls = [];
+      for (let i = -10; i <= 10; i++) {
+        for (let j = -10; j <= 10; j++) {
+          const wall = new THREE.Mesh();
+          wall.position.set(i, j, -5);
+          wall.rotation.y = Math.PI / 2;
+          wall.material = new THREE.MeshBasicMaterial({ color: 0x808080 });
+          scene.add(wall);
+          walls.push({
+            mesh: wall,
+            position: new THREE.Vector3(i, j, -5),
+          });
+        }
+      }
+
+      // Add lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+      scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(5, 5, 5);
+      scene.add(directionalLight);
+
+      // Camera position
+      camera.position.z = 20;
+
+      // Controls
+      let isMoving = false;
+      let rotation = 0;
+      let speed = 0.15;
+
+      // Game loop
+      function animate() {
+        requestAnimationFrame(animate);
+
+        // Update Pac-Man position
+        if (keys.ArrowLeft) {
+          pacman.rotation.y -= speed;
+        } else if (keys.ArrowRight) {
+          pacman.rotation.y += speed;
+        } else if (keys.ArrowUp) {
+          pacman.rotation.x += speed;
+        } else if (keys.ArrowDown) {
+          pacman.rotation.x -= speed;
+        }
+
+        // Rotate Pac-Man based on mouse position
+        const mouse = window.mouseEvent || window.webkitMouseEvent;
+        if (mouse) {
+          const delta = new THREE.Vector2(
+            mouse.clientX / window.innerWidth - 0.5,
+            0.5 - mouse.clientY / window.innerHeight
+          );
+          pacman.rotation.y += delta.x * 0.5;
+          pacman.rotation.x += delta.y * 0.5;
+        }
+
+        // Update Pac-Man position
+        pacman.position.y += Math.sin(rotation) * speed;
+        pacman.position.x += Math.cos(rotation) * speed;
+
+        // Update ghosts
+        ghosts.forEach((ghost) => {
+          const targetPosition = new THREE.Vector3(
+            Math.random() * 10 - 5,
+            Math.random() * 10 - 5,
+            -5
+          );
+          ghost.position.sub(targetPosition);
+          ghost.position.normalize().multiplyScalar(0.1);
+        });
+
+        // Update dots
+        dots.forEach((dot) => {
+          const distance = Math.sqrt(
+            Math.pow(dot.position.x - pacman.position.x, 2) +
+              Math.pow(dot.position.y - pacman.position.y, 2) +
+              Math.pow(dot.position.z - pacman.position.z, 2)
+          );
+
+          if (distance < 1) {
+            scene.remove(dot.mesh);
+            dots.splice(index, 1);
+          }
+        });
+
+        // Rotate camera
+        camera.rotation.y += 0.01;
+
+        // Clear scene
+        renderer.render(scene, camera);
+      }
+
+      // Event listeners
+      window.addEventListener("keydown", (e) => {
+        if (e.code === "Space") {
+          dots.forEach((dot) => {
+            const distance = Math.sqrt(
+              Math.pow(dot.position.x - pacman.position.x, 2) +
+                Math.pow(dot.position.y - pacman.position.y, 2) +
+                Math.pow(dot.position.z - pacman.position.z, 2)
+            );
+
+            if (distance < 1) {
+              dot.mesh.remove();
+              dots.splice(index, 1);
+            }
+          });
+        }
+      });
+
+      // Mouse event
+      window.addEventListener("mousemove", (e) => {
+        if (e.target) {
+          const delta = new THREE.Vector2(
+            e.clientX / window.innerWidth - 0.5,
+            0.5 - e.clientY / window.innerHeight
+          );
+          pacman.rotation.y += delta.x * 0.5;
+          pacman.rotation.x += delta.y * 0.5;
+        }
+      });
+
+      // Initialize game
+      animate();
+    </script>
+  </body>
+</html>

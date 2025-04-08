@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sonido + Visualización Básicos</title>
+    <style>
+      body {
+        margin: 0;
+        background: black;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+      canvas {
+        display: block;
+      }
+      button {
+        position: absolute;
+        bottom: 20px;
+        padding: 15px 25px;
+        font-size: 18px;
+        background: white;
+        color: black;
+        border: none;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      button:hover {
+        background: #ccc;
+      }
+      button:disabled {
+        background: #444;
+        color: #888;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <button id="start-button">Iniciar Sonido</button>
+
+    <script>
+      let cantidadSinusoides = 20; // 🌀 Número de elementos en sonido y visualización
+      let duracion = 8.0; // ⏳ Duración total
+      let fadeOutTime = 7.5; // 🔇 Tiempo de desvanecimiento
+      let notaDeInicio = 220.0; // 🎵 Nota base
+      let notaDeLlegada = 880.0; // 🎵 Nota objetivo
+      let dispersionInicial = 50; // 📊 Variabilidad inicial
+
+      let context = new (window.AudioContext || window.webkitAudioContext)();
+      let masterGain = new GainNode(context, { gain: 1.0 }); // 🔥 Controla volumen global
+      masterGain.connect(context.destination);
+
+      function generarEscala(inicio, llegada, cantidad) {
+        let escala = [];
+        for (let i = 0; i < cantidad; i++) {
+          let factor = i / (cantidad - 1);
+          escala.push(inicio * (1 - factor) + llegada * factor);
+        }
+        return escala;
+      }
+
+      function generarClusterInicial(notaCentro, dispersion, cantidad) {
+        let cluster = [];
+        for (let i = 0; i < cantidad; i++) {
+          let desviacion = (Math.random() * 2 - 1) * dispersion;
+          cluster.push(notaCentro + desviacion);
+        }
+        return cluster;
+      }
+
+      let targets = generarEscala(
+        notaDeInicio,
+        notaDeLlegada,
+        cantidadSinusoides
+      );
+      let initials = generarClusterInicial(
+        notaDeInicio,
+        dispersionInicial,
+        cantidadSinusoides
+      );
+
+      function playDeepNote(callback) {
+        let saws = [],
+          amps = [],
+          pans = [];
+
+        for (let i = 0; i < targets.length; i++) {
+          saws[i] = new OscillatorNode(context, { type: "sawtooth" });
+          amps[i] = new GainNode(context);
+          pans[i] = new StereoPannerNode(context);
+
+          let panValue = (circles[i].x - canvas.width / 2) / (canvas.width / 2);
+
+          saws[i].frequency.setValueAtTime(initials[i], context.currentTime);
+          pans[i].pan.setValueAtTime(panValue, context.currentTime);
+          amps[i].gain.setValueAtTime(0.125, context.currentTime);
+
+          saws[i].connect(amps[i]);
+          amps[i].connect(pans[i]);
+          pans[i].connect(masterGain);
+
+          saws[i].start();
+          saws[i].frequency.exponentialRampToValueAtTime(
+            targets[i],
+            context.currentTime + duracion
+          );
+          amps[i].gain.linearRampToValueAtTime(
+            0.0,
+            context.currentTime + fadeOutTime
+          );
+          saws[i].stop(context.currentTime + duracion);
+        }
+
+        setTimeout(callback, duracion * 1000);
+      }
+    </script>
+  </body>
+</html>

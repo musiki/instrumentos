@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FM Synth and Moving Circle</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #1e1e1e;
+        color: white;
+      }
+      #fm-container {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin: 10px 0 5px;
+      }
+      input[type="range"] {
+        width: 200px;
+        margin: 10px 0;
+      }
+      #circle-container {
+        position: relative;
+        width: 300px;
+        height: 300px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        margin-top: 20px;
+      }
+      #circle {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #00ff00;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      #toggle-btn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #00ff00;
+        color: black;
+        border: none;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="fm-container">
+      <label for="rise">Rise (Time)</label>
+      <input type="range" id="rise" min="0" max="1" step="0.01" value="0.5" />
+      <label for="fall">Fall (Time)</label>
+      <input type="range" id="fall" min="0" max="1" step="0.01" value="0.5" />
+      <label for="freq">Frequency</label>
+      <input type="range" id="freq" min="10" max="1000" step="1" value="440" />
+      <label for="modDepth">Mod Depth</label>
+      <input
+        type="range"
+        id="modDepth"
+        min="0"
+        max="1"
+        step="0.01"
+        value="0.5"
+      />
+    </div>
+
+    <div id="circle-container">
+      <div id="circle"></div>
+    </div>
+
+    <button id="toggle-btn">Toggle Circle Motion</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.8.39/build/Tone.js"></script>
+    <script>
+      // Tone.js setup for FM synthesis
+      const riseLFO = new Tone.LFO({
+        frequency: 0.5,
+        type: "sine",
+        min: 0,
+        max: 1,
+      }).start();
+
+      const fallLFO = new Tone.LFO({
+        frequency: 0.5,
+        type: "sine",
+        min: 0,
+        max: 1,
+      }).start();
+
+      let fmCarrier = new Tone.Oscillator(440, "sine").toDestination();
+      let fmModulator = new Tone.Oscillator(0.5, "sine");
+
+      fmCarrier.start();
+      fmModulator.start();
+
+      const modDepth = document.getElementById("modDepth");
+      const freqControl = document.getElementById("freq");
+
+      modDepth.addEventListener("input", (event) => {
+        fmModulator.frequency.value = event.target.value * 10;
+      });
+
+      freqControl.addEventListener("input", (event) => {
+        fmCarrier.frequency.value = event.target.value;
+      });
+
+      const riseControl = document.getElementById("rise");
+      const fallControl = document.getElementById("fall");
+
+      riseControl.addEventListener("input", (event) => {
+        riseLFO.frequency.value = event.target.value;
+        fmModulator.frequency.value = event.target.value * 10;
+      });
+
+      fallControl.addEventListener("input", (event) => {
+        fallLFO.frequency.value = event.target.value;
+        fmModulator.frequency.value = event.target.value * 10;
+      });
+
+      fmModulator.connect(fmCarrier.frequency);
+
+      // Circle movement setup
+      const circle = document.getElementById("circle");
+      const toggleBtn = document.getElementById("toggle-btn");
+      let isMoving = false;
+      let x = 150,
+        y = 150; // Initial position of the circle
+
+      let moveCircle = () => {
+        if (isMoving) {
+          x += Math.sin(Date.now() / 1000) * 50;
+          y += Math.cos(Date.now() / 1000) * 50;
+
+          if (x < 0) x = 300;
+          if (x > 300) x = 0;
+          if (y < 0) y = 300;
+          if (y > 300) y = 0;
+
+          circle.style.left = `${x}px`;
+          circle.style.top = `${y}px`;
+
+          requestAnimationFrame(moveCircle);
+        }
+      };
+
+      toggleBtn.addEventListener("click", () => {
+        isMoving = !isMoving;
+        if (isMoving) {
+          moveCircle();
+        }
+      });
+    </script>
+  </body>
+</html>

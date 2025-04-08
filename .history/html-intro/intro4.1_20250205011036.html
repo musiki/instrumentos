@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FM Synth and Moving Circle</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #1e1e1e;
+        color: white;
+      }
+      #fm-container {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin: 10px 0 5px;
+      }
+      input[type="range"] {
+        width: 200px;
+        margin: 10px 0;
+      }
+      #circle-container {
+        position: relative;
+        width: 300px;
+        height: 300px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        margin-top: 20px;
+      }
+      #circle {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #00ff00;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+      #toggle-btn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #00ff00;
+        color: black;
+        border: none;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="fm-container">
+      <label for="rise">Rise (Time)</label>
+      <input type="range" id="rise" min="0" max="1" step="0.01" value="0.5" />
+      <label for="fall">Fall (Time)</label>
+      <input type="range" id="fall" min="0" max="1" step="0.01" value="0.5" />
+      <label for="freq">Frequency</label>
+      <input type="range" id="freq" min="10" max="1000" step="1" value="440" />
+      <label for="modDepth">Mod Depth</label>
+      <input
+        type="range"
+        id="modDepth"
+        min="0"
+        max="1"
+        step="0.01"
+        value="0.5"
+      />
+    </div>
+
+    <div id="circle-container">
+      <div id="circle"></div>
+    </div>
+
+    <button id="toggle-btn">Toggle Circle Motion</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.8.39/build/Tone.js"></script>
+    <script>
+      let audioContextInitialized = false;
+
+      // Web Audio API setup
+      const audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+      const gainNode = audioContext.createGain();
+      const modulator = audioContext.createOscillator();
+      const carrier = audioContext.createOscillator();
+      const modDepthControl = document.getElementById("modDepth");
+      const freqControl = document.getElementById("freq");
+
+      // LFOs for Rise and Fall
+      const riseLFO = audioContext.createOscillator();
+      const fallLFO = audioContext.createOscillator();
+      const modDepthGain = audioContext.createGain();
+
+      modDepthGain.gain.value = modDepthControl.value;
+      riseLFO.frequency.value = 0.5; // Frequency for the rise LFO (can be adjusted)
+      fallLFO.frequency.value = 0.5; // Frequency for the fall LFO (can be adjusted)
+
+      modulator.type = "sine";
+      carrier.type = "sine";
+
+      modulator.frequency.value = 2; // Frequency of modulator LFO for modulation
+      carrier.frequency.value = freqControl.value; // Frequency of the carrier oscillator
+
+      // Connecting modulator to modulation depth
+      modulator.connect(modDepthGain);
+      modDepthGain.connect(carrier.frequency);
+
+      // Connect LFOs for rise and fall modulation to the modulator frequency
+      riseLFO.connect(modulator.frequency);
+      fallLFO.connect(modulator.frequency);
+
+      // Gain node to control output volume
+      carrier.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      // Handle user inputs
+      modDepthControl.addEventListener("input", (event) => {
+        modDepthGain.gain.value = event.target.value; // Update modulation depth dynamically
+      });
+
+      freqControl.addEventListener("input", (event) => {
+        carrier.frequency.value = event.target.value; // Update frequency of the carrier dynamically
+      });
+
+      // Initialize Tone.js AudioContext with user interaction
+      const initAudioContext = () => {
+        if (!audioContextInitialized) {
+          audioContext.resume().then(() => {
+            carrier.start();
+            modulator.start();
+            riseLFO.start();
+            fallLFO.start();
+            audioContextInitialized = true;
+          });
+        }
+      };
+
+      // Circle movement setup
+      const circle = document.getElementById("circle");
+      const toggleBtn = document.getElementById("toggle-btn");
+      let isMoving = false;
+      let x = 150,
+        y = 150; // Initial position of the circle
+
+      let moveCircle = () => {
+        if (isMoving) {
+          x += Math.sin(Date.now() / 1000) * 50;
+          y += Math.cos(Date.now() / 1000) * 50;
+
+          if (x < 0) x = 300;
+          if (x > 300) x = 0;
+          if (y < 0) y = 300;
+          if (y > 300) y = 0;
+
+          circle.style.left = `${x}px`;
+          circle.style.top = `${y}px`;
+
+          requestAnimationFrame(moveCircle);
+        }
+      };
+
+      toggleBtn.addEventListener("click", () => {
+        initAudioContext(); // Start AudioContext on button click
+        isMoving = !isMoving;
+        if (isMoving) {
+          moveCircle();
+        }
+      });
+    </script>
+  </body>
+</html>

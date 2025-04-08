@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { border: 1px solid black; }
+        #instructions { position: absolute; top: 10px; left: 10px; }
+    </style>
+</head>
+<body>
+    <div id="instructions">
+        Use arrow keys to move Pac-Man<br>
+        Click/mouse to rotate and shoot<br>
+        Press spacebar to eat dots
+    </div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const CELL_SIZE = 15;
+        const PACMAN_SIZE = CELL_SIZE * 0.75;
+        const DOT_SIZE = CELL_SIZE * 0.25;
+        const GHOST_SIZE = CELL_SIZE * 0.5;
+
+        canvas.width = CELL_SIZE * 20;
+        canvas.height = CELL_SIZE * 20;
+
+        let score = 0;
+        let gameOver = false;
+        let isMoving = false;
+        let rotation = 0;
+        const speed = 0.1;
+
+        const pacman = document.createElement('div');
+        pacman.style.left = '10px';
+        pacman.style.top = '10px';
+        pacman.style.backgroundColor = '#ff0000';
+        pacman.style.borderRadius = '50%';
+        canvas.appendChild(pacman);
+
+        const dots = [];
+        for(let i = 0; i < 50; i++) {
+            const dot = document.createElement('div');
+            dot.style.left = Math.random() * (canvas.width - DOT_SIZE * 2) + 'px';
+            dot.style.top = Math.random() * (canvas.height - DOT_SIZE * 2) + 'px';
+            dot.style.backgroundColor = '#ffffff';
+            dot.style.borderRadius = '50%';
+            dots.push({
+                element: dot,
+                x: parseFloat(dot.style.left),
+                y: parseFloat(dot.style.top)
+            });
+        }
+
+        const ghosts = [];
+        for(let i = 0; i < 4; i++) {
+            const ghost = document.createElement('div');
+            ghost.style.left = '10px';
+            ghost.style.top = '10px';
+            ghost.style.backgroundColor = `hsl(${Math.random() * 360}, 50%, 50%)`;
+            ghost.style.borderRadius = '50%';
+            ghosts.push({
+                element: ghost,
+                x: 10,
+                y: 10,
+                targetX: 0,
+                targetY: 0
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if(e.code === 'Space') {
+                dots.forEach(d => {
+                    const dx = d.x - pacman.style.left;
+                    const dy = d.y - pacman.style.top;
+                    if(dx < PACMAN_SIZE && dx > -PACMAN_SIZE && dy < PACMAN_SIZE && dy > -PACMAN_SIZE) {
+                        d.element.remove();
+                        dots.splice(index, 1);
+                        score++;
+                        document.getElementById('instructions').innerHTML = 
+                            `<div style="margin-top: 20px">Use arrow keys to move Pac-Man<br>Click/mouse to rotate and shoot<br>Press spacebar to eat dots (score: ${score})</div>`;
+                    }
+                });
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if(e.target) {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            }
+        });
+
+        function animate() {
+            if(gameOver || score === dots.length) {
+                clearInterval(animate);
+                return;
+            }
+
+            isMoving = true;
+
+            pacman.style.left = (MovementLeft - Rotation) % canvas.width;
+            pacman.style.top = (MovementUp + Rotation) % canvas.height;
+
+            ghosts.forEach(ghost => {
+                const dx = ghost.x - pacman.style.left;
+                const dy = ghost.y - pacman.style.top;
+
+                if(dx > PACMAN_SIZE || dx < -PACMAN_SIZE || dy > PACMAN_SIZE || dy < -PACMAN_SIZE) {
+                    ghost.x += 0.5 * (dx / Math.hypot(dx, dy) * 0.5);
+                    ghost.y += 0.5 * (dy / Math.hypot(dx, dy) * 0.5);
+                }
+            });
+
+            dots.forEach((dot, i) => {
+                const dx = dot.x - pacman.style.left;
+                const dy = dot.y - pacman.style.top;
+
+                if(dx > PACMAN_SIZE || dx < -PACMAN_SIZE || dy > PACMAN_SIZE || dy < -PACMAN_SIZE) {
+                    dot.x += 0.3 * (dx / Math.hypot(dx, dy));
+                    dot.y += 0.3 * (dy / Math.hypot(dx, dy));
+                }
+
+                if(dot.x < pacman.style.left - PACMAN_SIZE) {
+                    dot.element.remove();
+                    dots.splice(index, 1);
+                    score++;
+                }
+            });
+
+            document.getElementById('instructions').innerHTML = 
+                `<div style="margin-top: 20px">Use arrow keys to move Pac-Man<br>Click/mouse to rotate and shoot<br>Press spacebar to eat dots (score: ${score})</div>`;
+        }
+
+        let lastTime = 0;
+        function gameLoop() {
+            const now = Date.now();
+            if(now - lastTime > 1000) {
+                lastTime = now;
+                const keydowns = documentEventListeners('keydown');
+                if(keydowns.length) {
+                    animate();
+                }
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+
+        // Add event listeners for arrow keys
+        document.addEventListener('keydown', (e) => {
+            if(e.code in ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']) {
+                const keys = {
+                    ArrowLeft: false,
+                    ArrowRight: false,
+                    ArrowUp: false,
+                    ArrowDown: false
+                };
+
+                switch(e.code) {
+                    case 'ArrowLeft':
+                        keys.ArrowLeft = true;
+                        pacman.style.left = '10px';
+                        pacman.style.top = '10px';
+                        break;
+                    case 'ArrowRight':
+                        keys.ArrowRight = true;
+                        pacman.style.left = canvas.width - 10;
+                        pacman.style.top = '10px';
+                        break;
+                    case 'ArrowUp':
+                        keys.ArrowUp = true;
+                        pacman.style.left = '10px';
+                        pacman.style.top = canvas.height - 10;
+                        break;
+                    case 'ArrowDown':
+                        keys.ArrowDown = true;
+                        pacman.style.left = canvas.width - 10;
+                        pacman.style.top = canvas.height - 10;
+                        break;
+                }
+
+                if(keys.ArrowLeft) {
+                    pacman.style.left = '10px';
+                    pacman.style.top = '10px';
+                }
+                if(keys.ArrowRight) {
+                    pacman.style.left = canvas.width - 10;
+                    pacman.style.top = '10px';
+                }
+                if(keys.ArrowUp) {
+                    pacman.style.left = '10px';
+                    pacman.style.top = canvas.height - 10;
+                }
+                if(keys.ArrowDown) {
+                    pacman.style.left = canvas.width - 10;
+                    pacman.style.top = canvas.height - 10;
+                }
+            }
+        });
+
+        // Add event listener for mouse movement
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+    </script>
+</body>
+</html>

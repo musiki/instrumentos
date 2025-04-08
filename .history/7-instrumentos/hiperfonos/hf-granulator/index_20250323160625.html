@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>HF Minimal Granulator</title>
+  <link rel="manifest" href="manifest.json">
+  <!-- Eruda for mobile debugging -->
+  <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #000; color: #fff; height: 100vh; width: 100vw; overflow: hidden;
+      position: relative; touch-action: none;
+    }
+    #app { height: 100%; width: 100%; position: relative; }
+    #waveform { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+    #canvas { width: calc(100% - 10px); height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+    #vu-meter { width: 1px; height: 100%; position: absolute; top: 0; left: 0; z-index: 2; }
+    #volume-control { width: 5px; height: 100%; position: absolute; top: 0; right: 0; z-index: 2; }
+    #volume-control-area { width: 10px; height: 100%; position: absolute; top: 0; right: 0; z-index: 2; }
+    #spectrogram { width: calc(100% - 10px); height: 100%; position: absolute; top: 0; left: 0; display: none; z-index: 2; }
+    .record-button {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      width: 60px; height: 60px; border-radius: 50%; background-color: #f44336;
+      border: none; cursor: pointer; z-index: 10; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    }
+    .record-button.recording { animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.1); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+    .status {
+      position: fixed; bottom: 10px; left: 10px; padding: 5px 10px; background: rgba(0, 0, 0, 0.5);
+      border-radius: 4px; z-index: 10;
+    }
+    .mode-indicator, .noise-indicator {
+      position: fixed; top: 10px; padding: 5px 10px; color: #fff;
+      background: none; border: none; cursor: pointer; z-index: 10;
+      text-decoration: none; user-select: none; -webkit-user-select: none; touch-action: manipulation;
+    }
+    .mode-indicator { right: 40px; }
+    .noise-indicator { right: 10px; }
+    .noise-indicator.calibrating { color: #f44336; }
+    .noise-indicator.calibrated { color: #00ff00; }
+    .noise-indicator.disabled {
+      color: white;
+      border-color: white;
+    }
+    .region { position: absolute; height: 100%; background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(255, 255, 255, 0.7); pointer-events: none; z-index: 3; transition: opacity 0.4s ease; }
+    .handle { position: absolute; width: 1px; height: 100%; top: 0; cursor: ew-resize; pointer-events: all; z-index: 4; transition: opacity 0.4s ease; }
+    .handle-start { left: 0; background: rgba(0, 255, 0, 0.7); }
+    .handle-end { right: 0; background: rgba(255, 0, 0, 0.7); }
+    body.fullscreen #canvas, body.fullscreen #spectrogram { width: calc(100vw - 10px); height: 100vh; }
+    body.fullscreen .record-button { bottom: 30px; width: 80px; height: 80px; }
+    @media (max-width: 768px) {
+      .record-button { width: 80px; height: 80px; bottom: 30px; }
+      .status, .mode-indicator, .noise-indicator { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div id="waveform"></div>
+    <canvas id="canvas"></canvas>
+    <canvas id="vu-meter"></canvas>
+    <canvas id="volume-control"></canvas>
+    <div id="volume-control-area"></div>
+    <canvas id="spectrogram"></canvas>
+    <button id="record-button" class="record-button"></button>
+    <div id="status" class="status">Ready</div>
+    <div id="mode-indicator" class="mode-indicator">W</div>
+    <div id="noise-indicator" class="noise-indicator">N</div>
+  </div>
+
+  <script>
+    let audioContext = null, audioBuffer = null, mediaRecorder = null, audioChunks = [], mediaStream = null;
+    let isRecording = false, isPlaying = false, selectedRegion = { start: 0, end: 0 }, sourceNode = null;
+    let isFirstClick = true, firstClickTime = null, isWaveformMode = true, analyser = null;
+    const toFadeOut = 400;
+    const kalmanFactor = 0;
+    const safeZone = 10;
+    let gainNode = null, distortionNode = null, distortionGainNode = null, reverbNode = null, inputAnalyser = null;
+    let dryGainNode = null, wetGainNode = null;
+    let isSilenced = false;
+    let noiseProfile = null, isCalibrating = false;
+    let twoFingerDistance = null, twoFingerAngle = null, stretchNode = null;
+    let initialTouchPositions = [];
+    let reverbDuration = 0.5, reverbWetLevel = 0; // Persist reverb settings
+    let noiseReductionEnabled = false;
+
+    const recordButton = document.getElementById('record-button');
+    const statusEl = document.getElementById('status');
+    const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
+    const vuMeter = document.getElementById('vu-meter'), vuCtx = vuMeter.getContext('2d');
+    const volumeControl = document.getElementById('volume-control'), volumeCtx = volumeControl.getContext('2d');
+    const volumeControlArea = document.getElementById('volume-control-area');
+    const waveformEl = document.getElementById('waveform');
+    const spectrogram = document.getElementById('spectrogram'), spectrogramCtx = spectrogram.getContext('2d');
+    const modeIndicator = document.getElementById('mode-indicator');
+    const noiseIndicator = document.getElementById('noise-indicator');
+
+    document.addEventListener('DOMContentLoaded', init);
+
+    async function init() {
+      resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioContext();
+        gainNode = audioContext.createGain();
+        distortionGainNode = audioContext.createGain();
+        distortionNode = audioContext.createWaveShaper();
+        distortionNode.curve = makeDistortionCurve(0);
+        distortionGainNode.gain.value = 1;
+        reverbNode = audioContext.createConvolver();
+        reverbNode.buffer = createReverbImpulse(reverbDuration);
+        dryGainNode = audioContext.createGain();
+        wetGainNode = audioContext.createGain();
+        dryGainNode.gain.value = 1 - reverbWetLevel;
+        wetGainNode.gain.value = reverbWetLevel;
+        analyser = audioContext.createAnalyser(); analyser.fftSize = 2048; analyser.smoothingTimeConstant = 0;
+        inputAnalyser = audioContext.createAnalyser(); inputAnalyser.fftSize = 2048; inputAnalyser.smoothingTimeConstant = 0.1;
+        gainNode.gain.value = 0.5; // Default 25%
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) document.addEventListener('touchstart', resumeAudioContext, { once: true });
+        updateStatus('Ready');
+        drawVuMeter();
+        drawVolumeControl();
+        setupNoiseControls();
+      } catch (err) { updateStatus('Audio not supported'); console.error('Audio init error:', err); }
+
+      recordButton.addEventListener('click', handleRecordButtonClick);
+      recordButton.addEventListener('touchend', (e) => { e.preventDefault(); handleRecordButtonClick(); });
+
+      modeIndicator.addEventListener('click', toggleVisualizationMode);
+      modeIndicator.addEventListener('touchend', (e) => { e.preventDefault(); toggleVisualizationMode(); });
+
+      volumeControlArea.addEventListener('touchstart', handleVolumeTouch);
+      volumeControlArea.addEventListener('touchmove', handleVolumeTouch);
+      volumeControlArea.addEventListener('mousedown', handleVolumeMouse);
+      volumeControlArea.addEventListener('mousemove', handleVolumeMouse);
+      volumeControlArea.addEventListener('mouseup', () => volumeDragging = false);
+
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && !e.repeat) { e.preventDefault(); handleRecordButtonClick(); }
+        if (e.code === 'KeyR') clearSelection();
+        if (e.code === 'KeyW') toggleVisualizationMode();
+        if (e.code === 'KeyF') enterFullscreen();
+        if (e.code === 'KeyN') calibrateNoise();
+      });
+
+      canvas.addEventListener('click', handleCanvasClick);
+      canvas.addEventListener('touchstart', handleTouchStart);
+      canvas.addEventListener('touchmove', handleTouchMove);
+      canvas.addEventListener('touchend', handleTouchEnd);
+      spectrogram.addEventListener('click', handleCanvasClick);
+      spectrogram.addEventListener('touchstart', handleTouchStart);
+      spectrogram.addEventListener('touchmove', handleTouchMove);
+      spectrogram.addEventListener('touchend', handleTouchEnd);
+
+      let lastTap = 0;
+      document.addEventListener('touchend', (e) => {
+        const currentTime = new Date().getTime();
+        const tapGap = currentTime - lastTap;
+        if (tapGap < 300 && tapGap > 0 && !document.fullscreenElement) {
+          const y = e.changedTouches[0].clientY;
+          if (y < window.innerHeight - 100) {
+            enterFullscreen();
+          }
+        }
+        lastTap = currentTime;
+      });
+    }
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth - safeZone; canvas.height = window.innerHeight;
+      vuMeter.width = 1; vuMeter.height = window.innerHeight;
+      volumeControl.width = 5; volumeControl.height = window.innerHeight;
+      spectrogram.width = window.innerWidth - safeZone; spectrogram.height = window.innerHeight;
+      drawWaveform(); if (audioBuffer && !isWaveformMode) drawSpectrogram();
+      drawVolumeControl();
+    }
+
+    function resumeAudioContext() { if (audioContext && audioContext.state === 'suspended') audioContext.resume(); }
+    function updateStatus(message) { statusEl.textContent = message; console.log(message); }
+
+    function drawVuMeter() {
+      vuCtx.clearRect(0, 0, vuMeter.width, vuMeter.height);
+      if (inputAnalyser && mediaStream) {
+        const dataArray = new Uint8Array(inputAnalyser.frequencyBinCount);
+        inputAnalyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+        const avg = sum / dataArray.length;
+        const db = 20 * Math.log10(avg / 255 + 1e-10);
+        const level = Math.max(0, (db + 60) / 60);
+        const y = vuMeter.height * (1 - level);
+        vuCtx.fillStyle = 'white';
+        vuCtx.fillRect(0, y, 1, vuMeter.height - y);
+      }
+      requestAnimationFrame(drawVuMeter);
+    }
+
+    function drawVolumeControl() {
+      volumeCtx.clearRect(0, 0, volumeControl.width, volumeControl.height);
+      const defaultY = volumeControl.height * 0.75; // 25% from bottom
+      volumeCtx.fillStyle = 'white';
+      volumeCtx.fillRect(0, defaultY, 5, 1); // 1px high line at 25%
+    }
+
+    let volumeDragging = false;
+    function handleVolumeTouch(e) {
+      e.preventDefault();
+      const rect = volumeControlArea.getBoundingClientRect();
+      const y = e.touches[0].clientY - rect.top;
+      adjustVolume(y);
+    }
+
+    function handleVolumeMouse(e) {
+      if (e.type === 'mousedown' || volumeDragging) {
+        volumeDragging = true;
+        const rect = volumeControlArea.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        adjustVolume(y);
+      }
+    }
+
+    function adjustVolume(y) {
+      const height = volumeControlArea.offsetHeight;
+      const percentage = Math.max(0, Math.min(1, 1 - y / height));
+      let gain, distortionAmount;
+      if (percentage <= 0.25) {
+        gain = percentage * 2;
+        distortionAmount = 0;
+      } else if (percentage <= 0.5) {
+        gain = 0.5 + (percentage - 0.25) * 2;
+        distortionAmount = 0;
+      } else {
+        gain = 1;
+        distortionAmount = 400 * (percentage - 0.5) * 2;
+      }
+      gainNode.gain.value = gain;
+      distortionNode.curve = makeDistortionCurve(distortionAmount);
+      updateStatus(`Volume: ${(gain * 100).toFixed(0)}% - Distortion: ${Math.round(distortionAmount)}`);
+    }
+
+    function enterFullscreen() {
+      document.documentElement.requestFullscreen().catch(err => console.error('Fullscreen error:', err));
+      document.body.classList.add('fullscreen');
+    }
+
+    function toggleVisualizationMode() {
+      isWaveformMode = !isWaveformMode;
+      if (isWaveformMode) {
+        canvas.style.display = 'block'; spectrogram.style.display = 'none'; modeIndicator.textContent = 'W';
+      } else {
+        canvas.style.display = 'none'; spectrogram.style.display = 'block'; modeIndicator.textContent = 'S';
+        if (audioBuffer) drawSpectrogram();
+      }
+    }
+
+    async function handleRecordButtonClick() {
+      if (audioContext.state === 'suspended') await audioContext.resume();
+      if (!isRecording) startRecording(); else stopRecording();
+    }
+
+    async function calibrateNoise(retry = false) {
+      if (isRecording || isCalibrating) return;
+      try {
+        // Always use 5s for calibration for better results on all devices
+        const duration = 5;
+        updateStatus(`Calibrating noise (${duration}s)...`);
+        isCalibrating = true;
+        noiseIndicator.classList.add('calibrating');
+        audioChunks = [];
+        
+        console.log('Starting noise calibration');
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('Got media stream for calibration');
+        
+        const source = audioContext.createMediaStreamSource(mediaStream);
+        source.connect(inputAnalyser);
+        mediaRecorder = new MediaRecorder(mediaStream);
+        console.log('MediaRecorder created, state:', mediaRecorder.state);
+        
+        mediaRecorder.ondataavailable = (event) => { 
+          if (event.data && event.data.size > 0) {
+            audioChunks.push(event.data);
+            console.log('Noise chunk received, size:', event.data.size);
+          }
+        };
+        
+        mediaRecorder.start(1000); // Capture data every second
+        console.log('MediaRecorder started');
+
+        const calibrationTimeout = setTimeout(() => {
+          if (isCalibrating) {
+            console.log('Calibration timeout triggered');
+            try {
+              mediaRecorder.stop();
+              console.log('MediaRecorder stopped from timeout');
+            } catch (err) {
+              console.error('Error stopping recorder on timeout:', err);
+            }
+            
+            try {
+              mediaStream.getTracks().forEach(track => track.stop());
+              console.log('Media tracks stopped from timeout');
+            } catch (err) {
+              console.error('Error stopping tracks on timeout:', err);
+            }
+            
+            updateStatus('Calibration timeout');
+            isCalibrating = false;
+            noiseIndicator.classList.remove('calibrating');
+          }
+        }, duration * 1000 + 3000); // Extra 3s buffer
+
+        setTimeout(() => {
+          if (isCalibrating) {
+            console.log('Calibration time completed, processing...');
+            try {
+              mediaRecorder.stop();
+              console.log('MediaRecorder stopped normally');
+            } catch (err) {
+              console.error('Error stopping recorder after calibration:', err);
+            }
+            
+            try {
+              mediaStream.getTracks().forEach(track => track.stop());
+              console.log('Media tracks stopped normally');
+            } catch (err) {
+              console.error('Error stopping tracks after calibration:', err);
+            }
+            
+            noiseIndicator.classList.remove('calibrating');
+            processNoiseProfile(audioChunks);
+            clearTimeout(calibrationTimeout);
+          }
+        }, duration * 1000);
+      } catch (err) {
+        updateStatus('Calibration failed: ' + err.message);
+        console.error('Calibration error:', err);
+        isCalibrating = false;
+        noiseIndicator.classList.remove('calibrating');
+      }
+    }
+
+    async function processNoiseProfile(chunks) {
+      try {
+        console.log('Processing noise profile with chunks:', chunks.length);
+        console.log('Chunk details:', chunks.map(c => c.size).join(', '));
+        
+        const blob = new Blob(chunks, { type: 'audio/wav' });
+        console.log('Noise blob created, size:', blob.size);
+        
+        if (blob.size < 44) {
+          throw new Error('Calibration data too small');
+        }
+        
+        const arrayBuffer = await blob.arrayBuffer();
+        console.log('ArrayBuffer created, length:', arrayBuffer.byteLength);
+        
+        try {
+          const noiseBuffer = await audioContext.decodeAudioData(arrayBuffer);
+          console.log('Audio decoded successfully, duration:', noiseBuffer.duration);
+          
+          noiseProfile = computeNoiseSpectrum(noiseBuffer);
+          console.log('Noise spectrum computed');
+          
+          // Enable noise reduction by default after calibration
+          noiseReductionEnabled = true;
+          noiseIndicator.classList.remove('disabled');
+          noiseIndicator.classList.add('calibrated');
+          updateStatus('Noise calibrated - Ready');
+          isCalibrating = false;
+        } catch (decodeErr) {
+          console.error('Audio decode error:', decodeErr);
+          throw new Error('Decoding failed');
+        }
+      } catch (err) {
+        updateStatus('Noise calibration failed: ' + err.message);
+        console.error('Noise processing error:', err);
+        isCalibrating = false;
+      }
+    }
+
+    function computeNoiseSpectrum(buffer) {
+      const fftSize = 2048;
+      const channelData = buffer.getChannelData(0);
+      const spectrum = new Float32Array(fftSize / 2);
+      let sum = new Float32Array(fftSize / 2);
+      let count = 0;
+      for (let offset = 0; offset + fftSize <= channelData.length; offset += fftSize / 2) {
+        const real = new Float32Array(fftSize), imag = new Float32Array(fftSize);
+        for (let i = 0; i < fftSize; i++) real[i] = channelData[offset + i] * (0.5 * (1 - Math.cos(2 * Math.PI * i / (fftSize - 1))));
+        fft(real, imag);
+        for (let i = 0; i < fftSize / 2; i++) {
+          sum[i] += Math.sqrt(real[i] * real[i] + imag[i] * imag[i]);
+        }
+        count++;
+      }
+      for (let i = 0; i < fftSize / 2; i++) spectrum[i] = sum[i] / count;
+      return spectrum;
+    }
+
+    async function startRecording() {
+      try {
+        audioChunks = [];
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('getUserMedia not supported');
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const source = audioContext.createMediaStreamSource(mediaStream);
+        source.connect(inputAnalyser);
+        mediaRecorder = new MediaRecorder(mediaStream);
+        mediaRecorder.ondataavailable = (event) => { if (event.data && event.data.size > 0) audioChunks.push(event.data); };
+        mediaRecorder.start(2000);
+        isRecording = true;
+        recordButton.classList.add('recording');
+        updateStatus('Recording');
+      } catch (err) { updateStatus('Recording failed: ' + err.message); console.error('Error:', err); }
+    }
+
+    function stopRecording() {
+      if (!isRecording || !mediaRecorder) return;
+      updateStatus('Processing...');
+      return new Promise((resolve, reject) => {
+        mediaRecorder.onstop = async () => {
+          try {
+            if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+            if (audioChunks.length === 0) throw new Error('No audio data recorded');
+            const blob = new Blob(audioChunks, { type: 'audio/wav' });
+            if (blob.size < 44) throw new Error('Audio data too small to decode');
+            console.log('Blob size:', blob.size);
+            await processAudioBlob(blob);
+            isRecording = false;
+            recordButton.classList.remove('recording');
+            updateStatus('Ready');
+            resolve(blob);
+          } catch (err) { updateStatus('Error: ' + err.message); console.error('Decoding error:', err); isRecording = false; recordButton.classList.remove('recording'); reject(err); }
+        };
+        setTimeout(() => {
+          try { mediaRecorder.stop(); } catch (err) { if (mediaStream) mediaStream.getTracks().forEach(track => track.stop()); isRecording = false; recordButton.classList.remove('recording'); updateStatus('Error stopping: ' + err.message); reject(err); }
+        }, 100);
+      });
+    }
+
+    async function processAudioBlob(blob) {
+      updateStatus('Processing audio...');
+      try {
+        const arrayBuffer = await blob.arrayBuffer();
+        const rawBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        if (noiseProfile) {
+          try {
+            audioBuffer = await denoiseAudio(rawBuffer, noiseProfile);
+          } catch (err) {
+            console.error('Denoising failed:', err);
+            audioBuffer = rawBuffer;
+          }
+        } else {
+          audioBuffer = rawBuffer;
+        }
+        drawWaveform();
+        selectedRegion = { start: 0, end: audioBuffer.duration };
+        updateStatus('Ready - ' + Math.round(audioBuffer.duration * 1000) + 'ms');
+        if (!isWaveformMode) drawSpectrogram();
+      } catch (err) {
+        console.error('DecodeAudioData failed:', err);
+        updateStatus('Decoding failed: ' + err.message);
+      }
+    }
+
+    async function denoiseAudio(buffer, noiseSpectrum) {
+      // Skip denoising if disabled
+      if (!noiseReductionEnabled) {
+        console.log('Noise reduction disabled, skipping denoising');
+        return buffer;
+      }
+      
+      try {
+        console.log('Applying noise reduction');
+        const fftSize = 2048;
+        const channelData = buffer.getChannelData(0);
+        const outputData = new Float32Array(channelData.length);
+
+        for (let offset = 0; offset + fftSize <= channelData.length; offset += fftSize / 2) {
+          const real = new Float32Array(fftSize), imag = new Float32Array(fftSize);
+          for (let i = 0; i < fftSize; i++) real[i] = channelData[offset + i] * (0.5 * (1 - Math.cos(2 * Math.PI * i / (fftSize - 1))));
+          fft(real, imag);
+
+          const filteredReal = new Float32Array(fftSize), filteredImag = new Float32Array(fftSize);
+          for (let i = 0; i < fftSize / 2; i++) {
+            const magnitude = Math.sqrt(real[i] * real[i] + imag[i] * imag[i]);
+            const phase = Math.atan2(imag[i], real[i]);
+            let cleanMag = Math.max(0, magnitude - noiseSpectrum[i]);
+            cleanMag = kalmanFactor * cleanMag + (1 - kalmanFactor) * magnitude;
+            filteredReal[i] = cleanMag * Math.cos(phase);
+            filteredImag[i] = cleanMag * Math.sin(phase);
+            filteredReal[fftSize - 1 - i] = filteredReal[i];
+            filteredImag[fftSize - 1 - i] = -filteredImag[i];
+          }
+
+          ifft(filteredReal, filteredImag);
+
+          for (let i = 0; i < fftSize; i++) {
+            if (offset + i < outputData.length) {
+              outputData[offset + i] += filteredReal[i] * (0.5 * (1 - Math.cos(2 * Math.PI * i / (fftSize - 1))));
+            }
+          }
+        }
+
+        const cleanBuffer = audioContext.createBuffer(1, channelData.length, audioContext.sampleRate);
+        cleanBuffer.getChannelData(0).set(outputData);
+        return cleanBuffer;
+      } catch (err) {
+        console.error('Error in denoiseAudio:', err);
+        return buffer; // Return original buffer on error
+      }
+    }
+
+    function makeDistortionCurve(amount) {
+      const k = amount, n_samples = audioContext.sampleRate, curve = new Float32Array(n_samples);
+      for (let i = 0; i < n_samples; i++) {
+        const x = i * 2 / n_samples - 1;
+        curve[i] = (3 + k) * Math.atan(Math.sinh(x * 0.25) * 5) / (Math.PI + k * Math.abs(x));
+      }
+      return curve;
+    }
+
+    function createReverbImpulse(duration) {
+      const length = audioContext.sampleRate * duration;
+      const impulse = audioContext.createBuffer(1, length, audioContext.sampleRate);
+      const impulseData = impulse.getChannelData(0);
+      for (let i = 0; i < length; i++) {
+        impulseData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioContext.sampleRate * 0.03)); // Stronger decay
+      }
+      return impulse;
+    }
+
+    function fft(real, imag) {
+      const n = real.length;
+      if (n === 1) return;
+      const evenReal = new Float32Array(n / 2), evenImag = new Float32Array(n / 2);
+      const oddReal = new Float32Array(n / 2), oddImag = new Float32Array(n / 2);
+      for (let i = 0; i < n / 2; i++) {
+        evenReal[i] = real[2 * i]; evenImag[i] = imag[2 * i];
+        oddReal[i] = real[2 * i + 1]; oddImag[i] = imag[2 * i + 1];
+      }
+      fft(evenReal, evenImag); fft(oddReal, oddImag);
+      for (let k = 0; k < n / 2; k++) {
+        const theta = -2 * Math.PI * k / n, cosT = Math.cos(theta), sinT = Math.sin(theta);
+        const tReal = cosT * oddReal[k] - sinT * oddImag[k], tImag = sinT * oddReal[k] + cosT * oddImag[k];
+        real[k] = evenReal[k] + tReal; imag[k] = evenImag[k] + tImag;
+        real[k + n / 2] = evenReal[k] - tReal; imag[k + n / 2] = evenImag[k] - tImag;
+      }
+    }
+
+    function ifft(real, imag) {
+      const n = real.length;
+      for (let i = 0; i < n; i++) imag[i] = -imag[i];
+      fft(real, imag);
+      for (let i = 0; i < n; i++) {
+        real[i] /= n;
+        imag[i] = -imag[i] / n;
+      }
+    }
+
+    function drawWaveform() {
+      if (!audioBuffer || !ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const channelData = audioBuffer.getChannelData(0), step = Math.ceil(channelData.length / canvas.width), amp = canvas.height / 2;
+      ctx.beginPath(); ctx.moveTo(0, amp);
+      for (let i = 0; i < canvas.width; i++) {
+        let min = 1.0, max = -1.0;
+        for (let j = 0; j < step; j++) {
+          const datum = channelData[(i * step) + j]; if (datum < min) min = datum; if (datum > max) max = datum;
+        }
+        ctx.lineTo(i, (1 + min) * amp); ctx.lineTo(i, (1 + max) * amp);
+      }
+      ctx.strokeStyle = 'white'; ctx.lineWidth = 1; ctx.stroke();
+      if (!isSilenced) drawRegion();
+    }
+
+    function drawSpectrogram() {
+      if (!audioBuffer || !analyser) return;
+      spectrogramCtx.clearRect(0, 0, spectrogram.width, spectrogram.height);
+      const channelData = audioBuffer.getChannelData(0), duration = audioBuffer.duration;
+      const samplesPerPixel = Math.floor(channelData.length / spectrogram.width), fftSize = analyser.fftSize;
+      const dataArray = new Uint8Array(fftSize / 2), imageData = spectrogramCtx.createImageData(spectrogram.width, spectrogram.height);
+      for (let x = 0; x < spectrogram.width; x++) {
+        const startSample = x * samplesPerPixel, endSample = Math.min(startSample + fftSize, channelData.length);
+        let fftInput = channelData.slice(startSample, endSample);
+        if (fftInput.length < fftSize) {
+          const padded = new Float32Array(fftSize); padded.set(fftInput); fftInput = padded;
+        }
+        const real = new Float32Array(fftSize), imag = new Float32Array(fftSize);
+        for (let i = 0; i < fftSize; i++) real[i] = fftInput[i] * (0.5 * (1 - Math.cos(2 * Math.PI * i / (fftSize - 1))));
+        fft(real, imag);
+        for (let i = 0; i < fftSize / 2; i++) {
+          const magnitude = Math.sqrt(real[i] * real[i] + imag[i] * imag[i]);
+          const normalized = Math.min(255, Math.max(0, Math.round(magnitude * 255)));
+          const y = spectrogram.height - 1 - Math.floor(i * spectrogram.height / (fftSize / 2));
+          const idx = (y * spectrogram.width + x) * 4;
+          imageData.data[idx] = imageData.data[idx + 1] = imageData.data[idx + 2] = normalized; imageData.data[idx + 3] = 255;
+        }
+      }
+      spectrogramCtx.putImageData(imageData, 0, 0);
+    }
+
+    function drawRegion() {
+      if (!audioBuffer) return;
+      const existingRegion = document.querySelector('.region'); if (existingRegion) existingRegion.remove();
+      const duration = audioBuffer.duration;
+      const startPos = (selectedRegion.start / duration) * canvas.width;
+      const endPos = (selectedRegion.end / duration) * canvas.width;
+      if (startPos !== endPos) {
+        const region = document.createElement('div');
+        region.className = 'region';
+        region.style.left = Math.min(startPos, endPos) + 'px';
+        region.style.width = Math.abs(endPos - startPos) + 'px';
+        const startHandle = document.createElement('div');
+        startHandle.className = 'handle handle-start';
+        startHandle.addEventListener('mousedown', (e) => handleResize(e, 'start'));
+        startHandle.addEventListener('touchstart', handleResizeTouchStart);
+        const endHandle = document.createElement('div');
+        endHandle.className = 'handle handle-end';
+        endHandle.addEventListener('mousedown', (e) => handleResize(e, 'end'));
+        endHandle.addEventListener('touchstart', handleResizeTouchStart);
+        region.appendChild(startHandle);
+        region.appendChild(endHandle);
+        waveformEl.appendChild(region);
+      }
+    }
+
+    function handleCanvasClick(e) {
+      if (!audioBuffer) return;
+      const rect = e.target.getBoundingClientRect(), x = e.clientX - rect.left;
+      const clickTime = (x / rect.width) * audioBuffer.duration;
+      if (isFirstClick) {
+        firstClickTime = clickTime;
+        selectedRegion.start = clickTime;
+        selectedRegion.end = clickTime;
+        isFirstClick = false;
+        updateStatus('Start: ' + Math.round(clickTime * 1000) + 'ms');
+        drawRegion();
+      } else {
+        selectedRegion.end = clickTime;
+        if (selectedRegion.end < selectedRegion.start) {
+          const temp = selectedRegion.start;
+          selectedRegion.start = selectedRegion.end;
+          selectedRegion.end = temp;
+        }
+        isFirstClick = true;
+        isSilenced = false;
+        drawRegion();
+        playSelection();
+        updateStatus('Selection: ' + Math.round((selectedRegion.end - selectedRegion.start) * 1000) + 'ms');
+      }
+    }
+
+    let touchStart = null, applyingPressure = false;
+    function handleTouchStart(e) {
+      if (!audioBuffer) return;
+      e.preventDefault();
+      const rect = e.target.getBoundingClientRect();
+      initialTouchPositions = [];
+      if (e.touches.length === 3) {
+        initialTouchPositions = [
+          { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top },
+          { x: e.touches[1].clientX - rect.left, y: e.touches[1].clientY - rect.top },
+          { x: e.touches[2].clientX - rect.left, y: e.touches[2].clientY - rect.top }
+        ];
+        const x1 = 0, y1 = 0, x2 = 0, y2 = 0, x3 = 0, y3 = 0;
+        updateStatus(`THREE FINGERS ${x1} ${y1} / ${x2} ${y2} / ${x3} ${y3} - REVERB: ${Math.round(reverbDuration * 1000)}ms / ${Math.round(reverbWetLevel * 100)}%`);
+        playSelectionWithReverb();
+      } else if (e.touches.length === 2) {
+        initialTouchPositions = [
+          { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top },
+          { x: e.touches[1].clientX - rect.left, y: e.touches[1].clientY - rect.top }
+        ];
+        const x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+        twoFingerDistance = Math.sqrt(Math.pow(initialTouchPositions[1].x - initialTouchPositions[0].x, 2) + Math.pow(initialTouchPositions[1].y - initialTouchPositions[0].y, 2));
+        twoFingerAngle = Math.atan2(initialTouchPositions[1].y - initialTouchPositions[0].y, initialTouchPositions[1].x - initialTouchPositions[0].x) * 180 / Math.PI;
+        updateStatus(`TWO FINGERS ${x1} ${y1} / ${x2} ${y2} - STRETCH: 1.0x - PITCH: 1.0x`);
+        playSelection();
+      } else if (e.touches.length === 1) {
+        const touch = e.touches[0], y = touch.clientY;
+        if (y > window.innerHeight - 100 && Math.abs(touch.clientX - rect.left - canvas.width / 2) > 40) {
+          fadeOutAudioAndHandlers();
+        } else {
+          touchStart = { x: touch.clientX - rect.left, time: (touch.clientX - rect.left) / rect.width * audioBuffer.duration };
+          const force = touch.force !== undefined ? touch.force.toFixed(1) : 'N/A';
+          updateStatus(`Start: ${Math.round((touch.clientX - rect.left) / rect.width * audioBuffer.duration)}ms - FORCE: ${force}`);
+          drawRegion();
+        }
+      }
+    }
+
+    function handleTouchMove(e) {
+      if (!audioBuffer) return;
+      e.preventDefault();
+      const rect = e.target.getBoundingClientRect();
+      if (e.touches.length === 3 && initialTouchPositions.length === 3 && sourceNode) {
+        const x1 = Math.round(e.touches[0].clientX - rect.left - initialTouchPositions[0].x);
+        const y1 = Math.round(e.touches[0].clientY - rect.top - initialTouchPositions[0].y);
+        const x2 = Math.round(e.touches[1].clientX - rect.left - initialTouchPositions[1].x);
+        const y2 = Math.round(e.touches[1].clientY - rect.top - initialTouchPositions[1].y);
+        const x3 = Math.round(e.touches[2].clientX - rect.left - initialTouchPositions[2].x);
+        const y3 = Math.round(e.touches[2].clientY - rect.top - initialTouchPositions[2].y);
+        const maxYDelta = Math.max(y1, y2, y3);
+        const minYDelta = Math.min(y1, y2, y3);
+        const maxXDelta = Math.max(Math.abs(x1), Math.abs(x2), Math.abs(x3));
+        reverbDuration = Math.max(0, Math.min(5, 5 - (minYDelta + 400) / 80)); // -400 to 500 -> 5s to 0s
+        reverbWetLevel = Math.min(1, maxXDelta / 500); // 0 to 500 -> 0 to 1
+        reverbNode.buffer = createReverbImpulse(reverbDuration);
+        wetGainNode.gain.value = reverbWetLevel;
+        dryGainNode.gain.value = 1 - reverbWetLevel;
+        updateStatus(`THREE FINGERS ${x1} ${y1} / ${x2} ${y2} / ${x3} ${y3} - REVERB: ${Math.round(reverbDuration * 1000)}ms / ${Math.round(reverbWetLevel * 100)}%`);
+      } else if (e.touches.length === 2 && initialTouchPositions.length === 2 && sourceNode) {
+        const x1 = Math.round(e.touches[0].clientX - rect.left - initialTouchPositions[0].x);
+        const y1 = Math.round(e.touches[0].clientY - rect.top - initialTouchPositions[0].y);
+        const x2 = Math.round(e.touches[1].clientX - rect.left - initialTouchPositions[1].x);
+        const y2 = Math.round(e.touches[1].clientY - rect.top - initialTouchPositions[1].y);
+        const newDistance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        const newAngle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+        const angleDelta = newAngle - twoFingerAngle;
+        const yDelta = (y1 + y2) / 2;
+        const stretchFactor = Math.max(0.2, Math.min(5, 1 - yDelta / 200));
+        const pitchShift = Math.pow(2, angleDelta / 30);
+        sourceNode.playbackRate.value = stretchFactor;
+        sourceNode.detune.value = Math.log2(pitchShift) * 1200;
+        updateStatus(`TWO FINGERS ${x1} ${y1} / ${x2} ${y2} - STRETCH: ${stretchFactor.toFixed(1)}x - PITCH: ${pitchShift.toFixed(1)}x`);
+        twoFingerDistance = newDistance;
+        twoFingerAngle = newAngle;
+      } else if (touchStart) {
+        const touch = e.touches[0], x = touch.clientX - rect.left;
+        const touchTime = (x / rect.width) * audioBuffer.duration;
+        selectedRegion.start = Math.min(touchStart.time, touchTime);
+        selectedRegion.end = Math.max(touchStart.time, touchTime);
+        drawRegion();
+      }
+    }
+
+    function handleTouchEnd(e) {
+      if (e.touches.length < 2) {
+        twoFingerDistance = null;
+        twoFingerAngle = null;
+        initialTouchPositions = [];
+        if (sourceNode && e.touches.length !== 2) { // Only reset stretch/pitch, not reverb
+          sourceNode.playbackRate.value = 1;
+          sourceNode.detune.value = 0;
+        }
+        if (touchStart) {
+          updateStatus('Selection: ' + Math.round((selectedRegion.end - selectedRegion.start) * 1000) + 'ms');
+          touchStart = null;
+          playSelection();
+        } else if (!isPlaying) {
+          updateStatus('Ready');
+        }
+        applyingPressure = false;
+        distortionNode.curve = makeDistortionCurve(0);
+      }
+    }
+
+    function handleResizeTouchStart(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const touch = e.touches[0];
+      const force = touch.force !== undefined ? touch.force : 0;
+      applyingPressure = true;
+      const distortionAmount = 400 * (1 - Math.exp(-5 * force));
+      distortionNode.curve = makeDistortionCurve(distortionAmount);
+      updateStatus(`Resize - FORCE: ${force.toFixed(1)} - DISTORTION: ${Math.round(distortionAmount)}`);
+      handleResize(e, e.target.classList.contains('handle-start') ? 'start' : 'end');
+    }
+
+    let resizeType = null, startX = 0;
+    function handleResize(e, type) {
+      resizeType = type;
+      if (e.type === 'mousedown') startX = e.clientX; else startX = e.touches[0].clientX;
+      document.addEventListener('mousemove', handleResizeMove);
+      document.addEventListener('touchmove', handleResizeMove);
+      document.addEventListener('mouseup', stopResize);
+      document.addEventListener('touchend', stopResize);
+    }
+
+    function handleResizeMove(e) {
+      if (!resizeType || !audioBuffer) return;
+      e.preventDefault();
+      let currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+      const rect = canvas.getBoundingClientRect();
+      const delta = (currentX - startX) / rect.width * audioBuffer.duration;
+      if (resizeType === 'start') {
+        selectedRegion.start = Math.max(0, Math.min(selectedRegion.start + delta, selectedRegion.end - 0.01));
+      } else {
+        selectedRegion.end = Math.min(audioBuffer.duration, Math.max(selectedRegion.start + 0.01, selectedRegion.end + delta));
+      }
+      drawRegion();
+      startX = currentX;
+    }
+
+    function stopResize() {
+      resizeType = null;
+      document.removeEventListener('mousemove', handleResizeMove);
+      document.removeEventListener('touchmove', handleResizeMove);
+      document.removeEventListener('mouseup', stopResize);
+      document.removeEventListener('touchend', stopResize);
+      updateStatus('Selection: ' + Math.round((selectedRegion.end - selectedRegion.start) * 1000) + 'ms');
+      playSelection();
+    }
+
+    function clearSelection() {
+      if (!audioBuffer) return;
+      selectedRegion = { start: 0, end: audioBuffer.duration };
+      isFirstClick = true;
+      firstClickTime = null;
+      const existingRegion = document.querySelector('.region');
+      if (existingRegion) existingRegion.remove();
+      stopPlayback();
+      updateStatus('Selection cleared');
+    }
+
+    function playSelection(silentMode = false) {
+      if (!audioBuffer) return;
+      stopPlayback();
+      try {
+        sourceNode = audioContext.createBufferSource();
+        sourceNode.buffer = audioBuffer;
+        sourceNode.connect(analyser);
+        analyser.connect(distortionGainNode);
+        distortionGainNode.connect(distortionNode);
+        distortionNode.connect(gainNode);
+        if (!silentMode) gainNode.connect(audioContext.destination);
+        sourceNode.loop = true;
+        sourceNode.loopStart = Math.max(0, selectedRegion.start);
+        sourceNode.loopEnd = Math.min(selectedRegion.end, audioBuffer.duration);
+
+        const loopDuration = sourceNode.loopEnd - sourceNode.loopStart;
+        const fadeTime = 0.004;
+        const currentTime = audioContext.currentTime;
+
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(1, currentTime + fadeTime);
+
+        function scheduleFade() {
+          if (!isPlaying) return;
+          const nextLoopStart = currentTime + loopDuration;
+          gainNode.gain.setValueAtTime(1, nextLoopStart - fadeTime);
+          gainNode.gain.linearRampToValueAtTime(0, nextLoopStart);
+          gainNode.gain.setValueAtTime(0, nextLoopStart);
+          gainNode.gain.linearRampToValueAtTime(1, nextLoopStart + fadeTime);
+          setTimeout(scheduleFade, (loopDuration - fadeTime) * 1000);
+        }
+        scheduleFade();
+
+        sourceNode.start(0, sourceNode.loopStart);
+        isPlaying = true;
+        if (!silentMode) updateStatus('Playing: ' + Math.round((selectedRegion.end - selectedRegion.start) * 1000) + 'ms');
+        else updateStatus('Analyzing: ' + Math.round((selectedRegion.end - selectedRegion.start) * 1000) + 'ms');
+      } catch (err) { updateStatus('Playback error: ' + err.message); }
+    }
+
+    function playSelectionWithReverb() {
+      if (!audioBuffer) return;
+      stopPlayback();
+      try {
+        sourceNode = audioContext.createBufferSource();
+        sourceNode.buffer = audioBuffer;
+        sourceNode.connect(analyser);
+        analyser.connect(dryGainNode);
+        analyser.connect(reverbNode);
+        reverbNode.connect(wetGainNode);
+        dryGainNode.connect(gainNode);
+        wetGainNode.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        sourceNode.loop = true;
+        sourceNode.loopStart = Math.max(0, selectedRegion.start);
+        sourceNode.loopEnd = Math.min(selectedRegion.end, audioBuffer.duration);
+
+        const loopDuration = sourceNode.loopEnd - sourceNode.loopStart;
+        const fadeTime = 0.004;
+        const currentTime = audioContext.currentTime;
+
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(1, currentTime + fadeTime);
+
+        function scheduleFade() {
+          if (!isPlaying) return;
+          const nextLoopStart = currentTime + loopDuration;
+          gainNode.gain.setValueAtTime(1, nextLoopStart - fadeTime);
+          gainNode.gain.linearRampToValueAtTime(0, nextLoopStart);
+          gainNode.gain.setValueAtTime(0, nextLoopStart);
+          gainNode.gain.linearRampToValueAtTime(1, nextLoopStart + fadeTime);
+          setTimeout(scheduleFade, (loopDuration - fadeTime) * 1000);
+        }
+        scheduleFade();
+
+        sourceNode.start(0, sourceNode.loopStart);
+        isPlaying = true;
+        updateStatus('Playing with Reverb: ' + Math.round((selectedRegion.end - selectedRegion.start) * 1000) + 'ms');
+      } catch (err) { updateStatus('Playback error: ' + err.message); }
+    }
+
+    function stopPlayback() {
+      if (!isPlaying || !sourceNode) return;
+      try { sourceNode.stop(); sourceNode.disconnect(); gainNode.disconnect(); distortionNode.disconnect(); distortionGainNode.disconnect(); reverbNode.disconnect(); dryGainNode.disconnect(); wetGainNode.disconnect(); sourceNode = null; isPlaying = false; updateStatus('Stopped'); } catch (err) { console.error('Error stopping playback:', err); }
+    }
+
+    function fadeOutAudioAndHandlers() {
+      if (!isPlaying || !gainNode) return;
+      const region = document.querySelector('.region'), handles = document.querySelectorAll('.handle');
+      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + toFadeOut / 1000);
+      if (region) region.style.opacity = '0'; handles.forEach(h => h.style.opacity = '0');
+      setTimeout(() => { stopPlayback(); if (region) region.remove(); isSilenced = true; }, toFadeOut);
+    }
+
+    // Register the worklet processor
+    registerProcessor('freeverb-processor', FreeverbNode);
+
+    // In the setupGranulator function, replace the existing reverb implementation with FreeVerb
+    async function setupGranulator() {
+      try {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          await audioContext.resume();
+          
+          // Register the FreeVerb worklet
+          try {
+            const workletBlob = new Blob([
+              `class FreeverbNode extends AudioWorkletProcessor {
+                static get parameterDescriptors() {
+                  return [
+                    { name: 'roomSize', defaultValue: 0.7, minValue: 0, maxValue: 1 },
+                    { name: 'dampening', defaultValue: 0.5, minValue: 0, maxValue: 1 },
+                    { name: 'width', defaultValue: 1.0, minValue: 0, maxValue: 1 },
+                    { name: 'wet', defaultValue: 0.3, minValue: 0, maxValue: 1 },
+                    { name: 'dry', defaultValue: 0.7, minValue: 0, maxValue: 1 }
+                  ];
+                }
+              
+                constructor() {
+                  super();
+                  this.combFilters = [];
+                  this.allpassFilters = [];
+                  
+                  // Comb filter tunings as per Schroeder's model
+                  const combTunings = [1557, 1617, 1491, 1422, 1277, 1356, 1188, 1116];
+                  const allpassTunings = [225, 556, 441, 341];
+                  
+                  // Initialize comb filters
+                  for (let i = 0; i < 8; i++) {
+                    this.combFilters.push({
+                      buffer: new Float32Array(combTunings[i]),
+                      bufferIndex: 0,
+                      filterStore: 0
+                    });
+                  }
+                  
+                  // Initialize allpass filters
+                  for (let i = 0; i < 4; i++) {
+                    this.allpassFilters.push({
+                      buffer: new Float32Array(allpassTunings[i]),
+                      bufferIndex: 0
+                    });
+                  }
+                }
+              
+                process(inputs, outputs, parameters) {
+                  const input = inputs[0];
+                  const output = outputs[0];
+                  
+                  // Bail if we have no inputs
+                  if (input.length === 0) return true;
+                  
+                  const roomSize = parameters.roomSize.length > 1 ? parameters.roomSize[0] : parameters.roomSize[0];
+                  const dampening = parameters.dampening.length > 1 ? parameters.dampening[0] : parameters.dampening[0];
+                  const width = parameters.width.length > 1 ? parameters.width[0] : parameters.width[0];
+                  const wet = parameters.wet.length > 1 ? parameters.wet[0] : parameters.wet[0];
+                  const dry = parameters.dry.length > 1 ? parameters.dry[0] : parameters.dry[0];
+                  
+                  // Feedback for room size
+                  const feedback = 0.84 * roomSize;
+                  const damp = dampening * 0.4;
+                  
+                  // Get stereo input and output
+                  const inputL = input[0];
+                  const outputL = output[0];
+                  const outputR = output.length > 1 ? output[1] : output[0];
+                  
+                  if (!inputL || !outputL) return true;
+                  
+                  for (let i = 0; i < inputL.length; i++) {
+                    const inputSample = inputL[i];
+                    let outL = 0;
+                    let outR = 0;
+                    
+                    // Process through comb filters
+                    for (let j = 0; j < 8; j++) {
+                      const comb = this.combFilters[j];
+                      const bufferIndex = comb.bufferIndex;
+                      
+                      // Read from buffer
+                      const bufferSample = comb.buffer[bufferIndex];
+                      
+                      // Apply damping to the filter store
+                      comb.filterStore = (bufferSample * (1 - damp)) + (comb.filterStore * damp);
+                      
+                      // Write to buffer with feedback
+                      comb.buffer[bufferIndex] = inputSample + (comb.filterStore * feedback);
+                      
+                      // Update buffer index
+                      comb.bufferIndex = (bufferIndex + 1) % comb.buffer.length;
+                      
+                      // Alternating comb filter routing for stereo width
+                      if (j % 2 === 0) {
+                        outL += bufferSample;
+                      } else {
+                        outR += bufferSample;
+                      }
+                    }
+                    
+                    // Process through allpass filters
+                    for (let j = 0; j < 4; j++) {
+                      const allpass = this.allpassFilters[j];
+                      const bufferIndex = allpass.bufferIndex;
+                      
+                      // Read from buffer
+                      const bufferSample = allpass.buffer[bufferIndex];
+                      
+                      // Calculate allpass formula
+                      const output = -inputSample + bufferSample;
+                      allpass.buffer[bufferIndex] = inputSample + (bufferSample * 0.5); // 0.5 is the allpass coefficient
+                      
+                      // Update buffer index
+                      allpass.bufferIndex = (bufferIndex + 1) % allpass.buffer.length;
+                      
+                      // Alternating allpass filter routing for stereo width
+                      if (j % 2 === 0) {
+                        outL = output;
+                      } else {
+                        outR = output;
+                      }
+                    }
+                    
+                    // Apply stereo width
+                    const monoOutput = (outL + outR) * 0.5;
+                    const stereoOutput = (outL - outR) * 0.5;
+                    
+                    const wetLeft = monoOutput + stereoOutput * width;
+                    const wetRight = monoOutput - stereoOutput * width;
+                    
+                    // Mix dry/wet
+                    outputL[i] = inputSample * dry + wetLeft * wet;
+                    if (outputR) {
+                      outputR[i] = inputSample * dry + wetRight * wet;
+                    }
+                  }
+                  
+                  return true;
+                }
+              }
+              
+              registerProcessor('freeverb-processor', FreeverbNode);`
+            ], { type: 'application/javascript' });
+            
+            const workletURL = URL.createObjectURL(workletBlob);
+            await audioContext.audioWorklet.addModule(workletURL);
+            URL.revokeObjectURL(workletURL);
+            console.log('FreeVerb worklet registered successfully');
+          } catch (workletErr) {
+            console.error('Failed to register FreeVerb worklet:', workletErr);
+            // Continue without reverb if worklet fails
+          }
+
+          inputGain = audioContext.createGain();
+          inputGain.gain.value = 1.0;
+          
+          inputAnalyser = audioContext.createAnalyser();
+          inputAnalyser.fftSize = 1024;
+          
+          outputGain = audioContext.createGain();
+          outputGain.gain.value = 1.0;
+          
+          // Create FreeVerb node if available, otherwise fallback to ConvolverNode
+          try {
+            if (audioContext.audioWorklet) {
+              reverbNode = new AudioWorkletNode(audioContext, 'freeverb-processor');
+              reverbNode.parameters.get('roomSize').value = 0.8;
+              reverbNode.parameters.get('dampening').value = 0.5;
+              reverbNode.parameters.get('width').value = 1.0;
+              reverbNode.parameters.get('wet').value = 0.3;
+              reverbNode.parameters.get('dry').value = 0.7;
+              console.log('Using FreeVerb reverb');
+            } else {
+              // Fallback to traditional convolver
+              reverbNode = createConvolver();
+              console.log('Using fallback convolver reverb');
+            }
+          } catch (reverbErr) {
+            console.error('Error creating reverb:', reverbErr);
+            reverbNode = audioContext.createGain(); // No-op gain node as fallback
+          }
+          
+          inputGain.connect(inputAnalyser);
+          audioInput = inputGain;
+          
+          // Create low and high-pass filters
+          lowPassFilter = audioContext.createBiquadFilter();
+          lowPassFilter.type = "lowpass";
+          lowPassFilter.frequency.value = 18000;
+          
+          highPassFilter = audioContext.createBiquadFilter();
+          highPassFilter.type = "highpass";
+          highPassFilter.frequency.value = 80;
+          
+          // Connect the audio graph with filters
+          inputAnalyser.connect(lowPassFilter);
+          lowPassFilter.connect(highPassFilter);
+          highPassFilter.connect(reverbNode);
+          reverbNode.connect(outputGain);
+          outputGain.connect(audioContext.destination);
+          
+          // Create and connect the analyser node
+          playbackAnalyser = audioContext.createAnalyser();
+          playbackAnalyser.fftSize = fftSize;
+          outputGain.connect(playbackAnalyser);
+          
+          // Setup canvas for waveform display
+          setupCanvas();
+          
+          // Start drawing the waveform
+          requestAnimationFrame(drawWaveform);
+          requestAnimationFrame(drawSpectrogramFrame);
+          
+          // Set the application status
+          updateStatus('Ready');
+        } else {
+          await audioContext.resume();
+        }
+      } catch (err) {
+        updateStatus(`Error: ${err.message}`);
+        console.error('Error starting audio context:', err);
+      }
+    }
+    
+    // Function to create a basic convolver reverb (fallback)
+    function createConvolver() {
+      const convolver = audioContext.createConvolver();
+      const impulseLength = audioContext.sampleRate * 2.5; // 2.5 second reverb
+      const impulse = audioContext.createBuffer(2, impulseLength, audioContext.sampleRate);
+      
+      // Create impulse response with exponential decay
+      for (let channel = 0; channel < 2; channel++) {
+        const impulseData = impulse.getChannelData(channel);
+        for (let i = 0; i < impulseLength; i++) {
+          impulseData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioContext.sampleRate * 0.5));
+        }
+      }
+      
+      convolver.buffer = impulse;
+      return convolver;
+    }
+
+    // Update the setupNoiseControls function with proper handling
+    function setupNoiseControls() {
+      // Handle both click and touch events for noise indicator
+      const handleNoiseToggle = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // If we already have a noise profile, just toggle it on/off
+        if (noiseProfile) {
+          noiseReductionEnabled = !noiseReductionEnabled;
+          
+          if (noiseReductionEnabled) {
+            // Noise reduction is active (green)
+            noiseIndicator.classList.add('calibrated');
+            noiseIndicator.classList.remove('disabled');
+            updateStatus('Noise reduction enabled');
+            console.log('Noise reduction enabled');
+          } else {
+            // Noise reduction is disabled (white)
+            noiseIndicator.classList.remove('calibrated');
+            noiseIndicator.classList.add('disabled');
+            updateStatus('Noise reduction disabled');
+            console.log('Noise reduction disabled');
+          }
+        } else {
+          // No profile exists yet, so perform calibration
+          calibrateNoise();
+        }
+      };
+      
+      // Set up the event listeners
+      noiseIndicator.addEventListener('click', handleNoiseToggle);
+      noiseIndicator.addEventListener('touchend', handleNoiseToggle);
+    }
+  </script>
+</body>
+</html>

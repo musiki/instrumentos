@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pac-Man Game</title>
+<style>
+body {
+margin: 0;
+overflow: hidden;
+font-family: Arial, sans-serif;
+background-color: #000;
+display: flex;
+justify-content: center;
+align-items: center;
+height: 100vh;
+}
+
+    #gameCanvas {
+        border: 2px solid white;
+        background-color: black;
+    }
+
+    #instructions {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: white;
+        font-size: 14px;
+        padding: 10px;
+        border-radius: 5px;
+    }
+</style>
+</head>
+<body>
+<div id="instructions">
+Use arrow keys to move Pac-Man<br>
+Click/mouse to turn and shoot<br>
+Press spacebar to eat dots
+</div>
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const CELL_SIZE = 15;
+    const PACMAN_SIZE = CELL_SIZE * 0.75;
+    const DOT_SIZE = CELL_SIZE * 0.25;
+    const GHOST_SIZE = CELL_SIZE * 0.5;
+
+    // Set canvas size
+    canvas.width = CELL_SIZE * 20;
+    canvas.height = CELL_SIZE * 20;
+
+    // Game state
+    let score = 0;
+    let isMoving = false;
+    let rotation = 0;
+    let speed = 0.15;
+
+    // Game objects
+    const pacman = document.createElement('div');
+    pacman.style.position = 'absolute';
+    pacman.style.width = PACMAN_SIZE;
+    pacman.style.height = PACMAN_SIZE;
+    pacman.style.left = '10px';
+    pacman.style.top = '10px';
+    pacman.style.backgroundColor = '#ff0000';
+    pacman.style.borderRadius = '50%';
+    canvas.appendChild(pacman);
+
+    // Dots
+    const dots = [];
+    for(let i = 0; i < 50; i++) {
+        const dot = document.createElement('div');
+        dot.style.position = 'absolute';
+        dot.style.width = DOT_SIZE;
+        dot.style.height = DOT_SIZE;
+        dot.style.backgroundColor = '#ffffff';
+        dot.style.borderRadius = '50%';
+        dot.style.left = Math.random() * (canvas.width - DOT_SIZE * 2) + 'px';
+        dot.style.top = Math.random() * (canvas.height - DOT_SIZE * 2) + 'px';
+        canvas.appendChild(dot);
+        dots.push({
+            element: dot,
+            x: parseFloat(dot.style.left),
+            y: parseFloat(dot.style.top)
+        });
+    }
+
+    // Ghosts
+    const ghosts = [];
+    for(let i = 0; i < 4; i++) {
+        const ghost = document.createElement('div');
+        ghost.style.position = 'absolute';
+        ghost.style.width = GHOST_SIZE;
+        ghost.style.height = GHOST_SIZE;
+        ghost.style.backgroundColor = `hsl(${Math.random() * 360}, 50%, 50%)`;
+        ghost.style.borderRadius = '50%';
+        ghost.style.left = '10px';
+        ghost.style.top = '10px';
+        canvas.appendChild(ghost);
+        ghosts.push({
+            element: ghost,
+            x: parseFloat(ghost.style.left),
+            y: parseFloat(ghost.style.top),
+            targetX: 0,
+            targetY: 0
+        });
+    }
+
+    // Game controls
+    document.addEventListener('keydown', (e) => {
+        if(e.code === 'Space') {
+            dots.forEach(dot => {
+                if(Math.abs(dot.x - pacman.style.left) < DOT_SIZE && 
+                   Math.abs(dot.y - pacman.style.top) < DOT_SIZE) {
+                    dot.element.remove();
+                    dots.splice(index, 1);
+                    score++;
+                }
+            });
+        }
+    });
+
+    // Mouse controls
+    let mouseX = 0;
+    let mouseY = 0;
+    canvas.addEventListener('mousemove', (e) => {
+        if(e.target) {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        }
+    });
+
+    // Game loop
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Update Pac-Man position
+        if(keys.ArrowLeft) {
+            pacman.style.left -= speed;
+        } else if(keys.ArrowRight) {
+            pacman.style.left += speed;
+        } else if(keys.ArrowUp) {
+            pacman.style.top -= speed;
+        } else if(keys.ArrowDown) {
+            pacman.style.top += speed;
+        }
+
+        // Rotate Pac-Man based on mouse position
+        if(mouse) {
+            const delta = new THREE.Vector2(
+                mouseX.clientX / canvas.width - 0.5,
+                0.5 - mouseY / canvas.height
+            );
+            pacman.style.transform.rotation.y += delta.x * 0.5;
+            pacman.style.transform.rotation.x += delta.y * 0.5;
+        }
+
+        // Update Pac-Man position
+        pacman.style.left += Math.sin(rotation) * speed;
+        pacman.style.top += Math.cos(rotation) * speed;
+
+        // Update ghosts
+        ghosts.forEach(ghost => {
+            const targetPosition = {
+                x: Math.random() * (canvas.width - ghost.width * 2) + 'px',
+                y: Math.random() * (canvas.height - ghost.height * 2) + 'px'
+            };
+            ghost.element.style.left = targetPosition.x;
+            ghost.element.style.top = targetPosition.y;
+        });
+
+        // Update dots
+        dots.forEach(dot => {
+            const distance = Math.sqrt(
+                Math.pow(dot.x - pacman.style.left, 2) +
+                Math.pow(dot.y - pacman.style.top, 2)
+            );
+
+            if(distance < DOT_SIZE) {
+                dot.element.remove();
+                dots.splice(index, 1);
+            }
+        });
+
+        // Rotate camera
+        if(keys.ArrowUp || keys.ArrowDown) {
+            pacman.style.transform.rotation.y += 0.01;
+        }
+
+        // Clear scene
+        canvas.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Event listeners
+    window.addEventListener('keydown', (e) => {
+        if(e.code === 'Space') {
+            dots.forEach(dot => {
+                if(Math.abs(dot.x - pacman.style.left) < DOT_SIZE && 
+                   Math.abs(dot.y - pacman.style.top) < DOT_SIZE) {
+                    dot.element.remove();
+                    dots.splice(index, 1);
+                }
+            });
+        }
+    });
+
+    // Mouse event
+    window.addEventListener('mousemove', (e) => {
+        if(e.target) {
+            const delta = new THREE.Vector2(
+                e.clientX / canvas.width - 0.5,
+                0.5 - e.clientY / canvas.height
+            );
+            pacman.style.transform.rotation.y += delta.x * 0.5;
+            pacman.style.transform.rotation.x += delta.y * 0.5;
+        }
+    });
+
+    // Initialize game
+    animate();
+</script>
+</body>
+</html>
+

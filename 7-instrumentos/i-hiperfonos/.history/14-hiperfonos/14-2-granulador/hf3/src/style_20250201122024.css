@@ -1,0 +1,30 @@
+.app {
+  background-color: black;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.waveform {
+  width: 100%;
+  height: 80%;
+}
+
+.record-button {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 10%;
+  left: 10%;
+  background-color: gray;
+  border: none;
+  transition: background 0.3s;
+}
+
+.record-button.recording {
+  background-color: red;
+}

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maths-inspired FM Synth</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: black;
+        overflow: hidden;
+      }
+      #circle {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: grey;
+        position: absolute;
+        cursor: grab;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="circle"></div>
+    <script>
+      let context = new (window.AudioContext || window.webkitAudioContext)();
+      let carrier, modulator, modGain;
+      let isDragging = false;
+      const circle = document.getElementById("circle");
+
+      // Always running oscillator
+      function initSynth() {
+        carrier = context.createOscillator();
+        modulator = context.createOscillator();
+        modGain = context.createGain();
+
+        modulator.connect(modGain);
+        modGain.connect(carrier.frequency);
+        carrier.connect(context.destination);
+
+        carrier.start();
+        modulator.start();
+      }
+
+      function updateFM(x, y) {
+        let carrierBaseFreq = 100; // Base frequency for harmonic series
+        let harmonic = Math.round((x / window.innerWidth) * 10) + 1; // Define harmonic series
+        let carrierFreq = carrierBaseFreq * harmonic;
+
+        // Y-axis controls speed of glissando from logarithmic to exponential
+        let glideTime = Math.exp((-y / window.innerHeight) * 5) * 2; // 2s max, fast at low values
+
+        // Smooth transitions
+        carrier.frequency.setTargetAtTime(
+          carrierFreq,
+          context.currentTime,
+          glideTime
+        );
+        modulator.frequency.setTargetAtTime(
+          (x / window.innerWidth) * 500 + 50,
+          context.currentTime,
+          0.05
+        );
+        modGain.gain.setTargetAtTime(100, context.currentTime, 0.05);
+      }
+
+      circle.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        circle.style.backgroundColor = "red";
+        updateFM(e.clientX, e.clientY);
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (isDragging) {
+          circle.style.left = `${e.clientX - 50}px`;
+          circle.style.top = `${e.clientY - 50}px`;
+          updateFM(e.clientX, e.clientY);
+        }
+      });
+
+      document.addEventListener("mouseup", () => {
+        isDragging = false;
+        circle.style.backgroundColor = "grey";
+      });
+
+      initSynth(); // Initialize synth immediately
+    </script>
+  </body>
+</html>

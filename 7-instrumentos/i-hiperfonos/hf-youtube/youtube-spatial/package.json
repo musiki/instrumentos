@@ -1,0 +1,24 @@
+{
+  "name": "youtube-spatial",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.0.5"
+  },
+  "dependencies": {
+    "@babel/core": "^7.26.7",
+    "gsap": "^3.12.7",
+    "i": "^0.3.7",
+    "npm": "^11.1.0",
+    "parcel-bundler": "^1.12.5",
+    "three": "^0.173.0",
+    "tone": "^15.0.4",
+    "youtube-iframe-ctrl": "^1.0.3"
+  }
+}

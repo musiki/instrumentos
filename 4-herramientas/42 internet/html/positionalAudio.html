@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Spatial Audio with WASD Controls</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: black; 
+            color: white;
+            font-family: monospace;
+        }
+        canvas { 
+            display: block; 
+        }
+        /* HUD Styling */
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+        #controls-info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+        #audio-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 100;
+        }
+        .coordinate {
+            margin: 5px 0;
+        }
+        .x-coord { color: #ff5555; }
+        .y-coord { color: #55ff55; }
+        .z-coord { color: #5555ff; }
+        .rotation { color: #ffff55; }
+        .slider-container {
+            margin: 10px 0;
+        }
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .slider-value {
+            display: inline-block;
+            width: 50px;
+            text-align: right;
+        }
+        .reset-notification {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 18px;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+<!-- HUD Display for coordinates and rotation -->
+<div id="hud">
+    <h3>Ball Position & Rotation</h3>
+    <div id="position" class="coordinate">
+        <div class="x-coord">X: 0.00</div>
+        <div class="y-coord">Y: 0.00</div>
+        <div class="z-coord">Z: 0.00</div>
+    </div>
+    <div id="rotation" class="coordinate">
+        <div class="rotation">Rotation X: 0.00</div>
+        <div class="rotation">Rotation Y: 0.00</div>
+        <div class="rotation">Rotation Z: 0.00</div>
+    </div>
+    <div id="camera-pos" class="coordinate">
+        <h3>Camera Position</h3>
+        <div class="x-coord">X: 0.00</div>
+        <div class="y-coord">Y: 0.00</div>
+        <div class="z-coord">Z: 5.00</div>
+    </div>
+    <div id="camera-rot" class="coordinate">
+        <h3>Camera Rotation</h3>
+        <div class="rotation">Rotation X: 0.00</div>
+        <div class="rotation">Rotation Y: 0.00</div>
+        <div class="rotation">Rotation Z: 0.00</div>
+    </div>
+</div>
+
+<!-- Audio Controls -->
+<div id="audio-controls">
+    <h3>Audio Controls</h3>
+    <div class="slider-container">
+        <label for="frequency">Frequency (Hz): <span class="slider-value" id="frequency-value">440</span></label>
+        <input type="range" id="frequency" min="100" max="1000" step="10" value="440">
+    </div>
+    <div class="slider-container">
+        <label for="volume">Volume: <span class="slider-value" id="volume-value">0.5</span></label>
+        <input type="range" id="volume" min="0" max="1" step="0.05" value="0.5">
+    </div>
+    <div class="slider-container">
+        <label for="refDistance">Reference Distance: <span class="slider-value" id="refDistance-value">1.0</span></label>
+        <input type="range" id="refDistance" min="0.1" max="10" step="0.1" value="1">
+    </div>
+    <div class="slider-container">
+        <label for="rolloff">Rolloff Factor: <span class="slider-value" id="rolloff-value">1.0</span></label>
+        <input type="range" id="rolloff" min="0.1" max="5" step="0.1" value="1">
+    </div>
+    <h3>Ball Controls</h3>
+    <div class="slider-container">
+        <label for="ball-speed">Ball Speed: <span class="slider-value" id="ball-speed-value">0.01</span></label>
+        <input type="range" id="ball-speed" min="0.001" max="0.05" step="0.001" value="0.01">
+    </div>
+</div>
+
+<!-- Reset Notification -->
+<div id="reset-notification" class="reset-notification">Camera Reset</div>
+
+<!-- Controls information -->
+<div id="controls-info">
+    <h3>Controls:</h3>
+    <p>W/A/S/D - Move camera</p>
+    <p>Q/E - Move up/down</p>
+    <p>Arrow keys - Rotate camera</p>
+    <p>SPACE - Reset camera position</p>
+    <p>Click anywhere to start audio</p>
+    <p>Use sliders to adjust audio and ball speed</p>
+</div>
+
+<script>
+    // =============================================
+    // GLOBAL CONFIGURATION VARIABLES
+    // =============================================
+    
+    // Scene Configuration
+    const SCENE_CONFIG = {
+        cameraFOV: 75,
+        cameraNear: 0.1,
+        cameraFar: 1000,
+        initialCameraPosition: { x: 0, y: 0, z: 5 },
+        initialCameraRotation: { x: 0, y: 0, z: 0 }
+    };
+    
+    // Ball Configuration
+    const BALL_CONFIG = {
+        radius: 0.5,
+        segments: 32,
+        color: 0xff00ff,
+        emissive: 0x550055,
+        movementAmplitudeX: 3,
+        movementAmplitudeY: 2,
+        movementAmplitudeZ: 2,
+        movementSpeed: 0.01,
+        rotationSpeedX: 0.01,
+        rotationSpeedY: 0.005,
+        rotationSpeedZ: 0.003
+    };
+    
+    // Axis Visualization Configuration
+    const AXIS_CONFIG = {
+        length: 1,
+        thickness: 0.02,
+        xColor: 0xff0000,
+        yColor: 0x00ff00,
+        zColor: 0x0000ff
+    };
+    
+    // Grid Configuration
+    const GRID_CONFIG = {
+        size: 20,
+        divisions: 20,
+        mainColor: 0x555555,
+        secondaryColor: 0x333333
+    };
+    
+    // Lighting Configuration
+    const LIGHT_CONFIG = {
+        pointLightIntensity: 2,
+        pointLightDistance: 100,
+        pointLightPosition: { x: 0, y: 5, z: 5 },
+        ambientLightColor: 0x404040
+    };
+    
+    // Audio Configuration
+    const AUDIO_CONFIG = {
+        initialFrequency: 440,
+        initialVolume: 0.5,
+        refDistance: 1,
+        maxDistance: 20,
+        rolloffFactor: 1
+    };
+    
+    // Controls Configuration
+    const CONTROLS_CONFIG = {
+        movementSpeed: 0.1,
+        rotationSpeed: 0.02
+    };
+    
+    // Animation Variables
+    let time = 0;
+    let currentBallSpeed = BALL_CONFIG.movementSpeed;
+    let audioContext;
+    let oscillator;
+    let gainNode;
+    let positionalAudio;
+    let listener;
+    
+    // =============================================
+    // INITIALIZATION AND SETUP
+    // =============================================
+    
+    // Initialize Three.js Scene
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+        SCENE_CONFIG.cameraFOV, 
+        window.innerWidth / window.innerHeight, 
+        SCENE_CONFIG.cameraNear, 
+        SCENE_CONFIG.cameraFar
+    );
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Create Sphere Object (our audio source)
+    const geometry = new THREE.SphereGeometry(
+        BALL_CONFIG.radius, 
+        BALL_CONFIG.segments, 
+        BALL_CONFIG.segments
+    );
+    const material = new THREE.MeshStandardMaterial({ 
+        color: BALL_CONFIG.color, 
+        emissive: BALL_CONFIG.emissive 
+    });
+    const sphere = new THREE.Mesh(geometry, material);
+    
+    // Add axis visualization to the sphere
+    // This helps visualize the rotation of the sphere
+    
+    // X-axis (red)
+    const xAxisGeometry = new THREE.CylinderGeometry(
+        AXIS_CONFIG.thickness, 
+        AXIS_CONFIG.thickness, 
+        AXIS_CONFIG.length, 
+        8
+    );
+    const xAxisMaterial = new THREE.MeshBasicMaterial({ color: AXIS_CONFIG.xColor });
+    const xAxis = new THREE.Mesh(xAxisGeometry, xAxisMaterial);
+    xAxis.position.x = AXIS_CONFIG.length / 2;
+    xAxis.rotation.z = -Math.PI / 2;
+    sphere.add(xAxis);
+    
+    // Y-axis (green)
+    const yAxisGeometry = new THREE.CylinderGeometry(
+        AXIS_CONFIG.thickness, 
+        AXIS_CONFIG.thickness, 
+        AXIS_CONFIG.length, 
+        8
+    );
+    const yAxisMaterial = new THREE.MeshBasicMaterial({ color: AXIS_CONFIG.yColor });
+    const yAxis = new THREE.Mesh(yAxisGeometry, yAxisMaterial);
+    yAxis.position.y = AXIS_CONFIG.length / 2;
+    sphere.add(yAxis);
+    
+    // Z-axis (blue)
+    const zAxisGeometry = new THREE.CylinderGeometry(
+        AXIS_CONFIG.thickness, 
+        AXIS_CONFIG.thickness, 
+        AXIS_CONFIG.length, 
+        8
+    );
+    const zAxisMaterial = new THREE.MeshBasicMaterial({ color: AXIS_CONFIG.zColor });
+    const zAxis = new THREE.Mesh(zAxisGeometry, zAxisMaterial);
+    zAxis.position.z = AXIS_CONFIG.length / 2;
+    zAxis.rotation.x = Math.PI / 2;
+    sphere.add(zAxis);
+    
+    scene.add(sphere);
+
+    // Add a grid to help with spatial orientation
+    const gridHelper = new THREE.GridHelper(
+        GRID_CONFIG.size, 
+        GRID_CONFIG.divisions, 
+        GRID_CONFIG.mainColor, 
+        GRID_CONFIG.secondaryColor
+    );
+    scene.add(gridHelper);
+
+    // Lighting
+    const light = new THREE.PointLight(
+        0xffffff, 
+        LIGHT_CONFIG.pointLightIntensity, 
+        LIGHT_CONFIG.pointLightDistance
+    );
+    light.position.set(
+        LIGHT_CONFIG.pointLightPosition.x, 
+        LIGHT_CONFIG.pointLightPosition.y, 
+        LIGHT_CONFIG.pointLightPosition.z
+    );
+    scene.add(light);
+    
+    // Add ambient light so the back of objects is visible
+    const ambientLight = new THREE.AmbientLight(LIGHT_CONFIG.ambientLightColor);
+    scene.add(ambientLight);
+
+    // Position Camera
+    camera.position.set(
+        SCENE_CONFIG.initialCameraPosition.x,
+        SCENE_CONFIG.initialCameraPosition.y,
+        SCENE_CONFIG.initialCameraPosition.z
+    );
+    
+    // Set initial camera rotation
+    camera.rotation.set(
+        SCENE_CONFIG.initialCameraRotation.x,
+        SCENE_CONFIG.initialCameraRotation.y,
+        SCENE_CONFIG.initialCameraRotation.z
+    );
+
+    // =============================================
+    // THREE.JS AUDIO SETUP
+    // =============================================
+    
+    // Initialize audio - this will be called after user interaction
+    function initAudio() {
+        // Create an audio listener and add it to the camera
+        listener = new THREE.AudioListener();
+        camera.add(listener);
+        
+        // Create a positional audio source
+        positionalAudio = new THREE.PositionalAudio(listener);
+        
+        // Create audio context
+        audioContext = listener.context;
+        
+        // Create oscillator
+        oscillator = audioContext.createOscillator();
+        oscillator.frequency.value = AUDIO_CONFIG.initialFrequency;
+        oscillator.type = 'sine';
+        
+        // Create gain node for volume control
+        gainNode = audioContext.createGain();
+        gainNode.gain.value = AUDIO_CONFIG.initialVolume;
+        
+        // Connect nodes
+        oscillator.connect(gainNode);
+        
+        // Connect to positional audio
+        positionalAudio.setNodeSource(gainNode);
+        
+        // Configure positional audio parameters
+        positionalAudio.setRefDistance(AUDIO_CONFIG.refDistance);
+        positionalAudio.setMaxDistance(AUDIO_CONFIG.maxDistance);
+        positionalAudio.setRolloffFactor(AUDIO_CONFIG.rolloffFactor);
+        
+        // Add the audio to the sphere
+        sphere.add(positionalAudio);
+        
+        // Start the oscillator
+        oscillator.start(0);
+        
+        console.log("Three.js spatial audio initialized");
+    }
+    
+    // =============================================
+    // AUDIO CONTROLS SETUP
+    // =============================================
+    
+    // Get slider elements
+    const frequencySlider = document.getElementById('frequency');
+    const volumeSlider = document.getElementById('volume');
+    const refDistanceSlider = document.getElementById('refDistance');
+    const rolloffSlider = document.getElementById('rolloff');
+    const ballSpeedSlider = document.getElementById('ball-speed');
+    
+    // Get value display elements
+    const frequencyValue = document.getElementById('frequency-value');
+    const volumeValue = document.getElementById('volume-value');
+    const refDistanceValue = document.getElementById('refDistance-value');
+    const rolloffValue = document.getElementById('rolloff-value');
+    const ballSpeedValue = document.getElementById('ball-speed-value');
+    
+    // Set initial values
+    frequencySlider.value = AUDIO_CONFIG.initialFrequency;
+    volumeSlider.value = AUDIO_CONFIG.initialVolume;
+    refDistanceSlider.value = AUDIO_CONFIG.refDistance;
+    rolloffSlider.value = AUDIO_CONFIG.rolloffFactor;
+    ballSpeedSlider.value = BALL_CONFIG.movementSpeed;
+    
+    // Update display values
+    frequencyValue.textContent = AUDIO_CONFIG.initialFrequency.toString();
+    volumeValue.textContent = AUDIO_CONFIG.initialVolume.toFixed(2);
+    refDistanceValue.textContent = AUDIO_CONFIG.refDistance.toFixed(1);
+    rolloffValue.textContent = AUDIO_CONFIG.rolloffFactor.toFixed(1);
+    ballSpeedValue.textContent = BALL_CONFIG.movementSpeed.toFixed(3);
+    
+    // Add event listeners for sliders
+    frequencySlider.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value);
+        if (oscillator) {
+            oscillator.frequency.value = value;
+        }
+        frequencyValue.textContent = value.toString();
+    });
+    
+    volumeSlider.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        if (gainNode) {
+            gainNode.gain.value = value;
+        }
+        volumeValue.textContent = value.toFixed(2);
+    });
+    
+    refDistanceSlider.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        if (positionalAudio) {
+            positionalAudio.setRefDistance(value);
+        }
+        refDistanceValue.textContent = value.toFixed(1);
+    });
+    
+    rolloffSlider.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        if (positionalAudio) {
+            positionalAudio.setRolloffFactor(value);
+        }
+        rolloffValue.textContent = value.toFixed(1);
+    });
+    
+    ballSpeedSlider.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        currentBallSpeed = value;
+        ballSpeedValue.textContent = value.toFixed(3);
+    });
+
+    // =============================================
+    // CONTROLS SETUP
+    // =============================================
+    
+    // Object to track which keys are currently pressed
+    const keys = {
+        w: false,
+        a: false,
+        s: false,
+        d: false,
+        q: false,
+        e: false,
+        arrowup: false,
+        arrowdown: false,
+        arrowleft: false,
+        arrowright: false,
+        ' ': false // Space key
+    };
+    
+    // Event listeners for keyboard controls
+    document.addEventListener('keydown', (event) => {
+        const key = event.key.toLowerCase();
+        if (keys.hasOwnProperty(key)) {
+            keys[key] = true;
+            
+            // Handle space key press to reset camera
+            if (key === ' ') {
+                resetCamera();
+            }
+        }
+    });
+    
+    document.addEventListener('keyup', (event) => {
+        const key = event.key.toLowerCase();
+        if (keys.hasOwnProperty(key)) {
+            keys[key] = false;
+        }
+    });
+    
+    // Function to reset camera to initial position and rotation
+    function resetCamera() {
+        camera.position.set(
+            SCENE_CONFIG.initialCameraPosition.x,
+            SCENE_CONFIG.initialCameraPosition.y,
+            SCENE_CONFIG.initialCameraPosition.z
+        );
+        
+        camera.rotation.set(
+            SCENE_CONFIG.initialCameraRotation.x,
+            SCENE_CONFIG.initialCameraRotation.y,
+            SCENE_CONFIG.initialCameraRotation.z
+        );
+        
+        // Show reset notification
+        const notification = document.getElementById('reset-notification');
+        notification.style.opacity = '1';
+        
+        // Hide notification after 1.5 seconds
+        setTimeout(() => {
+            notification.style.opacity = '0';
+        }, 1500);
+        
+        // Update camera position in HUD
+        updateCameraHUD();
+    }
+    
+    // Function to handle camera movement based on key presses
+    function handleCameraMovement() {
+        // Forward/backward movement (Z-axis)
+        if (keys.w) {
+            // Move forward in the direction the camera is facing
+            camera.position.z -= CONTROLS_CONFIG.movementSpeed;
+        }
+        if (keys.s) {
+            // Move backward in the direction the camera is facing
+            camera.position.z += CONTROLS_CONFIG.movementSpeed;
+        }
+        
+        // Left/right movement (X-axis)
+        if (keys.a) {
+            camera.position.x -= CONTROLS_CONFIG.movementSpeed;
+        }
+        if (keys.d) {
+            camera.position.x += CONTROLS_CONFIG.movementSpeed;
+        }
+        
+        // Up/down movement (Y-axis)
+        if (keys.q) {
+            camera.position.y += CONTROLS_CONFIG.movementSpeed;
+        }
+        if (keys.e) {
+            camera.position.y -= CONTROLS_CONFIG.movementSpeed;
+        }
+        
+        // Camera rotation with arrow keys
+        if (keys.arrowup) {
+            camera.rotation.x += CONTROLS_CONFIG.rotationSpeed;
+        }
+        if (keys.arrowdown) {
+            camera.rotation.x -= CONTROLS_CONFIG.rotationSpeed;
+        }
+        if (keys.arrowleft) {
+            camera.rotation.y += CONTROLS_CONFIG.rotationSpeed;
+        }
+        if (keys.arrowright) {
+            camera.rotation.y -= CONTROLS_CONFIG.rotationSpeed;
+        }
+        
+        // Update camera position and rotation in HUD
+        updateCameraHUD();
+    }
+    
+    // =============================================
+    // HUD UPDATES
+    // =============================================
+    
+    // Function to update the HUD with current position and rotation values
+    function updateHUD() {
+        // Update position display
+        const positionDiv = document.getElementById('position');
+        positionDiv.querySelector('.x-coord').textContent = `X: ${sphere.position.x.toFixed(2)}`;
+        positionDiv.querySelector('.y-coord').textContent = `Y: ${sphere.position.y.toFixed(2)}`;
+        positionDiv.querySelector('.z-coord').textContent = `Z: ${sphere.position.z.toFixed(2)}`;
+        
+        // Update rotation display
+        const rotationDiv = document.getElementById('rotation');
+        rotationDiv.querySelectorAll('.rotation')[0].textContent = `Rotation X: ${(sphere.rotation.x * (180/Math.PI)).toFixed(2)}°`;
+        rotationDiv.querySelectorAll('.rotation')[1].textContent = `Rotation Y: ${(sphere.rotation.y * (180/Math.PI)).toFixed(2)}°`;
+        rotationDiv.querySelectorAll('.rotation')[2].textContent = `Rotation Z: ${(sphere.rotation.z * (180/Math.PI)).toFixed(2)}°`;
+    }
+    
+    // Function to update camera position and rotation in HUD
+    function updateCameraHUD() {
+        // Update camera position
+        const cameraPosDiv = document.getElementById('camera-pos');
+        cameraPosDiv.querySelector('.x-coord').textContent = `X: ${camera.position.x.toFixed(2)}`;
+        cameraPosDiv.querySelector('.y-coord').textContent = `Y: ${camera.position.y.toFixed(2)}`;
+        cameraPosDiv.querySelector('.z-coord').textContent = `Z: ${camera.position.z.toFixed(2)}`;
+        
+        // Update camera rotation
+        const cameraRotDiv = document.getElementById('camera-rot');
+        cameraRotDiv.querySelectorAll('.rotation')[0].textContent = `Rotation X: ${(camera.rotation.x * (180/Math.PI)).toFixed(2)}°`;
+        cameraRotDiv.querySelectorAll('.rotation')[1].textContent = `Rotation Y: ${(camera.rotation.y * (180/Math.PI)).toFixed(2)}°`;
+        cameraRotDiv.querySelectorAll('.rotation')[2].textContent = `Rotation Z: ${(camera.rotation.z * (180/Math.PI)).toFixed(2)}°`;
+    }
+
+    // =============================================
+    // ANIMATION LOOP
+    // =============================================
+    
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Handle camera movement from keyboard input
+        handleCameraMovement();
+
+        // Move the sphere sinusoidally in a 3D space
+        time += currentBallSpeed;
+        sphere.position.x = Math.sin(time) * BALL_CONFIG.movementAmplitudeX;
+        sphere.position.y = Math.cos(time) * BALL_CONFIG.movementAmplitudeY;
+        sphere.position.z = Math.sin(time * 0.5) * BALL_CONFIG.movementAmplitudeZ;
+        
+        // Add rotation to the sphere to visualize orientation
+        sphere.rotation.x += BALL_CONFIG.rotationSpeedX;
+        sphere.rotation.y += BALL_CONFIG.rotationSpeedY;
+        sphere.rotation.z += BALL_CONFIG.rotationSpeedZ;
+        
+        // Update the HUD with current values
+        updateHUD();
+
+        // Render the scene
+        renderer.render(scene, camera);
+    }
+
+    // =============================================
+    // WINDOW RESIZE HANDLING
+    // =============================================
+    
+    // Handle window resize to maintain proper aspect ratio
+    window.addEventListener('resize', () => {
+        // Update camera aspect ratio
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        
+        // Update renderer size
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // =============================================
+    // INITIALIZATION
+    // =============================================
+    
+    // Initialize HUD
+    updateCameraHUD();
+    
+    // Start the animation loop
+    animate();
+
+    // Activate audio on user interaction (required by browsers)
+    document.addEventListener('click', () => {
+        // Only initialize audio once
+        if (!audioContext) {
+            initAudio();
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arpeggiator - Just Intonation Harmonics with HUD</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: black;
+        overflow: hidden;
+        margin: 0;
+      }
+      #circle {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: grey;
+        position: absolute;
+        cursor: grab;
+      }
+      #hud {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: white;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="circle"></div>
+    <div id="hud">
+      <div>Canvas Width: <span id="canvasWidth">0</span></div>
+      <div>Canvas Height: <span id="canvasHeight">0</span></div>
+      <div>X Value: <span id="xValue">0</span></div>
+      <div>Y Value: <span id="yValue">0</span></div>
+      <div>Fundamental Frequency: <span id="fundamentalFreq">0</span> Hz</div>
+      <div>Harmonic Playing: <span id="harmonic"></span></div>
+      <div>Trigger State: <span id="triggerState">Inactive</span></div>
+      <div>Arpeggio Speed: <span id="arpeggioSpeed">0</span> ms</div>
+    </div>
+
+    <script>
+      let context;
+      let oscillator, gainNode;
+      let isDragging = false;
+      let harmonicSeries = [];
+      let currentNoteIndex = 0;
+      let arpeggioInterval;
+      const maxSpeed = 10; // Fastest speed of the arpeggiator (ms)
+      const minSpeed = 1000; // Slowest speed of the arpeggiator (ms)
+      const circle = document.getElementById("circle");
+      const canvasWidthElem = document.getElementById("canvasWidth");
+      const canvasHeightElem = document.getElementById("canvasHeight");
+      const xValueElem = document.getElementById("xValue");
+      const yValueElem = document.getElementById("yValue");
+      const fundamentalFreqElem = document.getElementById("fundamentalFreq");
+      const harmonicElem = document.getElementById("harmonic");
+      const triggerStateElem = document.getElementById("triggerState");
+      const arpeggioSpeedElem = document.getElementById("arpeggioSpeed");
+
+      function initAudio() {
+        if (!context) {
+          context = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (context.state === "suspended") {
+          context.resume();
+        }
+
+        // Set up oscillator and gain node
+        oscillator = context.createOscillator();
+        gainNode = context.createGain();
+        oscillator.type = "sine"; // Sinusoidal waveform
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+
+        oscillator.start();
+      }
+
+      function startArpeggio() {
+        // Make sure previous interval is cleared
+        if (arpeggioInterval) clearInterval(arpeggioInterval);
+
+        // Function to change the frequency every interval, based on current time
+        function changeHarmonic() {
+          if (oscillator) {
+            // Get the current harmonic based on the index
+            let harmonic = harmonicSeries[currentNoteIndex];
+            oscillator.frequency.setValueAtTime(harmonic, context.currentTime);
+
+            // Update HUD with current harmonic
+            harmonicElem.textContent = harmonic.toFixed(2);
+
+            // Move to the next harmonic in the series
+            currentNoteIndex++;
+            if (currentNoteIndex >= harmonicSeries.length) {
+              currentNoteIndex = 0; // Loop through the harmonics
+            }
+          }
+        }
+
+        // Dynamically update interval based on X mouse position
+        const intervalTime = mapSpeedBasedOnMouse();
+
+        // Start first harmonic immediately
+        changeHarmonic();
+        let nextTime = context.currentTime + intervalTime / 1000; // Convert ms to seconds
+        oscillator.stop(nextTime);
+
+        // Start loop for arpeggiator
+        arpeggioInterval = setInterval(() => {
+          changeHarmonic();
+          nextTime += intervalTime / 1000;
+        }, intervalTime);
+      }
+
+      function mapSpeedBasedOnMouse() {
+        // Calculate speed based on X position, where:
+        // 0 => maxSpeed (fast)
+        // 1 => minSpeed (slow)
+        const mouseX = circle.offsetLeft / window.innerWidth;
+        const speed = maxSpeed + (minSpeed - maxSpeed) * mouseX;
+        arpeggioSpeedElem.textContent = speed.toFixed(2); // Update HUD with new speed value
+        return speed;
+      }
+
+      function stopSynth() {
+        // Stop oscillator
+        if (oscillator) {
+          oscillator.stop();
+          oscillator = null;
+        }
+      }
+
+      function setupArpeggio() {
+        // Define the just intonation harmonic series (based on a fundamental frequency)
+        let fundamental = 220; // Example fundamental frequency (A3)
+        harmonicSeries = [
+          fundamental, // 1st harmonic: fundamental
+          (fundamental * 3) / 2, // 3rd harmonic
+          (fundamental * 5) / 4, // 5th harmonic
+          (fundamental * 7) / 4, // 7th harmonic
+          (fundamental * 9) / 8, // 9th harmonic
+        ];
+        fundamentalFreqElem.textContent = fundamental.toFixed(2); // Display the fundamental frequency
+      }
+
+      circle.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        circle.style.backgroundColor = "red";
+        triggerStateElem.textContent = "Active";
+        initAudio();
+        setupArpeggio();
+        startArpeggio();
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (isDragging) {
+          circle.style.left = `${e.clientX - 50}px`;
+          circle.style.top = `${e.clientY - 50}px`;
+
+          // Dynamically update speed while dragging
+          const speed = mapSpeedBasedOnMouse();
+
+          // Update HUD with mouse coordinates and speed
+          xValueElem.textContent = e.clientX;
+          yValueElem.textContent = e.clientY;
+        }
+      });
+
+      document.addEventListener("mouseup", () => {
+        if (isDragging) {
+          isDragging = false;
+          circle.style.backgroundColor = "grey";
+          triggerStateElem.textContent = "Inactive";
+          stopSynth();
+        }
+      });
+
+      // Update canvas size values in the HUD
+      window.addEventListener("resize", () => {
+        canvasWidthElem.textContent = window.innerWidth;
+        canvasHeightElem.textContent = window.innerHeight;
+      });
+
+      // Initial canvas size display
+      canvasWidthElem.textContent = window.innerWidth;
+      canvasHeightElem.textContent = window.innerHeight;
+    </script>
+  </body>
+</html>

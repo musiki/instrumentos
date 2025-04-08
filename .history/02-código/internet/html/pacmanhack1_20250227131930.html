@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artistic ASCII Pac-Man</title>
+    <style>
+               @import url('https://fonts.cdnfonts.com/css/ibm-plex-mono-3');
+
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #000;
+            font-family: 'IBM-Plex-Mono', monospace;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        #game-container {
+            position: relative;
+        }
+
+        canvas {
+            background-color: #000;
+            border: 4px solid #2121DE;
+        }
+
+        #scoreboard {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            color: white;
+            font-size: 18px;
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: -100px;
+            left: 0;
+            width: 100%;
+            color: yellow;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #FF0000;
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+            font-family: 'IBM-Plex-Mono', monospace;
+        }
+
+        .start-button {
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 20px;
+            background-color: #FFFF00;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            display: block;
+            font-family: 'IBM-Plex-Mono', monospace;
+        }
+
+        #maze-info {
+            position: absolute;
+            bottom: -75px;
+            left: 0;
+            width: 100%;
+            color: #4FD5D5;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="scoreboard">
+            <div>SCORE: <span id="score">0</span></div>
+            <div>LIVES: <span id="lives">3</span></div>
+        </div>
+        <canvas id="game-canvas" width="600" height="600"></canvas>
+        <div id="maze-info">Maze Shape: <span id="maze-shape">Square</span> | Scale: <span id="scale-type">Chromatic</span></div>
+        <div id="instructions">
+            Controls: Arrow Keys or WASD to move<br>
+            <small>Press M to mute/unmute sounds | Press R to regenerate maze</small>
+        </div>
+        <div class="game-over" id="game-over">GAME OVER</div>
+        <button class="start-button" id="start-button">START GAME</button>
+    </div>
+
+    <script>
+        // Game variables
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const livesElement = document.getElementById('lives');
+        const gameOverElement = document.getElementById('game-over');
+        const startButton = document.getElementById('start-button');
+        const mazeShapeElement = document.getElementById('maze-shape');
+        const scaleTypeElement = document.getElementById('scale-type');
+
+        // ASCII characters
+        const PACMAN_OPEN = 'C';
+        const PACMAN_CLOSED = 'O';
+        const DOT_CHARS = ['.', ';', ':', ','];
+        const GHOST_CHARS = ['@', '&', '$', '#'];
+        const WALL_CHAR = '█';
+        const POWER_DOT_CHAR = '*';
+
+        // Font size for ASCII rendering
+        const FONT_SIZE = 24;
+        
+        // Game constants
+        const CELL_SIZE = 30;
+        const GRID_WIDTH = Math.floor(canvas.width / CELL_SIZE);
+        const GRID_HEIGHT = Math.floor(canvas.height / CELL_SIZE);
+        const PACMAN_SPEED = 2;
+        const GHOST_SPEED = 1.5;
+        
+        // Game state
+        let score = 0;
+        let lives = 3;
+        let gameRunning = false;
+        let pacman = {
+            x: 0,
+            y: 0,
+            direction: 'right',
+            character: PACMAN_OPEN,
+            speed: PACMAN_SPEED
+        };
+        
+        let ghosts = [];
+        let dots = [];
+        let powerDots = [];
+        let walls = [];
+        let mazeShape = '';
+        let scaleType = '';
+        let powerMode = false;
+        let powerModeTimer = null;
+        let frameCount = 0;
+        let muted = false;
+        let ghostHouse = { x: 0, y: 0, width: 3, height: 3 };
+
+        // Audio context and sounds
+        let audioCtx;
+        let oscillators = {};
+        let currentNotes = [];
+        
+        // Possible maze shapes
+        const mazeShapes = [
+            'square', 'circle', 'triangle', 'hexagon', 'rhombus', 'pentagon'
+        ];
+        
+        // Initialize game
+        function initGame() {
+            // Reset game state
+            score = 0;
+            lives = 3;
+            powerMode = false;
+            if (powerModeTimer) clearTimeout(powerModeTimer);
+            
+            scoreElement.textContent = score;
+            livesElement.textContent = lives;
+            gameOverElement.style.display = 'none';
+            
+            // Generate random maze
+            generateRandomMaze();
+            
+            // Initialize Pacman at a valid position
+            placeEntityAtValidPosition(pacman);
+            pacman.direction = 'right';
+            pacman.character = PACMAN_OPEN;
+            
+            // Initialize ghosts
+            ghosts = [];
+            for (let i = 0; i < 4; i++) {
+                const ghost = {
+                    x: ghostHouse.x * CELL_SIZE + (ghostHouse.width / 2) * CELL_SIZE,
+                    y: ghostHouse.y * CELL_SIZE + (ghostHouse.height / 2) * CELL_SIZE,
+                    direction: ['up', 'down', 'left', 'right'][i],
+                    character: GHOST_CHARS[i],
+                    color: ['#FF0000', '#00FFFF', '#FFB8FF', '#FFB852'][i],
+                    speed: GHOST_SPEED,
+                    mode: 'scatter'
+                };
+                ghosts.push(ghost);
+            }
+
+            // Setup audio
+            if (!audioCtx) {
+                setupAudio();
+            } else if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            // Play intro based on maze shape
+            playIntroMelody();
+
+            // Start game
+            gameRunning = true;
+            gameLoop();
+        }
+
+        // Function to place an entity at a valid position
+        function placeEntityAtValidPosition(entity) {
+            let validPosition = false;
+            while (!validPosition) {
+                const gridX = Math.floor(Math.random() * GRID_WIDTH);
+                const gridY = Math.floor(Math.random() * GRID_HEIGHT);
+                
+                // Check if position is valid (not inside a wall or ghost house)
+                if (!isWall(gridX * CELL_SIZE, gridY * CELL_SIZE) && 
+                    !isInGhostHouse(gridX, gridY)) {
+                    entity.x = gridX * CELL_SIZE + CELL_SIZE / 2;
+                    entity.y = gridY * CELL_SIZE + CELL_SIZE / 2;
+                    validPosition = true;
+                }
+            }
+        }
+
+        // Check if a position is inside the ghost house
+        function isInGhostHouse(gridX, gridY) {
+            return gridX >= ghostHouse.x && 
+                   gridX < ghostHouse.x + ghostHouse.width && 
+                   gridY >= ghostHouse.y && 
+                   gridY < ghostHouse.y + ghostHouse.height;
+        }
+
+        // Check if a position has a wall
+        function isWall(x, y) {
+            const gridX = Math.floor(x / CELL_SIZE);
+            const gridY = Math.floor(y / CELL_SIZE);
+            
+            return walls.some(wall => 
+                Math.floor(wall.x / CELL_SIZE) === gridX && 
+                Math.floor(wall.y / CELL_SIZE) === gridY
+            );
+        }
+
+        // Generate a random procedural maze based on geometric shapes
+        function generateRandomMaze() {
+            // Clear existing elements
+            walls = [];
+            dots = [];
+            powerDots = [];
+            
+            // Randomly select a maze shape
+            mazeShape = mazeShapes[Math.floor(Math.random() * mazeShapes.length)];
+            mazeShapeElement.textContent = mazeShape.charAt(0).toUpperCase() + mazeShape.slice(1);
+            
+            // Set scale type based on maze shape
+            setScaleType();
+            
+            // Generate ghost house at random position (but not too close to edges)
+            ghostHouse = {
+                x: Math.floor(Math.random() * (GRID_WIDTH - 5)) + 2,
+                y: Math.floor(Math.random() * (GRID_HEIGHT - 5)) + 2,
+                width: 3,
+                height: 3
+            };
+            
+            // Create outer boundary based on the selected shape
+            createOuterBoundary();
+            
+            // Create ghost house
+            createGhostHouse();
+            
+            // Create inner walls
+            createInnerWalls();
+            
+            // Create dots
+            createDots();
+            
+            // Create power dots
+            createPowerDots();
+        }
+
+        // Set the musical scale type based on the maze shape
+        function setScaleType() {
+            switch (mazeShape) {
+                case 'circle':
+                    scaleType = 'chromatic';
+                    break;
+                case 'square':
+                    scaleType = 'quartal';
+                    break;
+                case 'triangle':
+                    scaleType = 'tritonic';
+                    break;
+                case 'hexagon':
+                    scaleType = 'hexatonic';
+                    break;
+                case 'rhombus':
+                    scaleType = 'augmented';
+                    break;
+                case 'pentagon':
+                    scaleType = 'pentatonic';
+                    break;
+                default:
+                    scaleType = 'chromatic';
+            }
+            
+            scaleTypeElement.textContent = scaleType.charAt(0).toUpperCase() + scaleType.slice(1);
+        }
+
+        // Create the outer boundary based on the selected shape
+        function createOuterBoundary() {
+            const centerX = Math.floor(GRID_WIDTH / 2);
+            const centerY = Math.floor(GRID_HEIGHT / 2);
+            const radius = Math.min(centerX, centerY) - 1;
+            
+            switch (mazeShape) {
+                case 'square':
+                    // Create square boundary
+                    for (let i = 0; i < GRID_WIDTH; i++) {
+                        walls.push({ x: i * CELL_SIZE, y: 0, width: CELL_SIZE, height: CELL_SIZE });
+                        walls.push({ x: i * CELL_SIZE, y: (GRID_HEIGHT - 1) * CELL_SIZE, width: CELL_SIZE, height: CELL_SIZE });
+                    }
+                    
+                    for (let i = 1; i < GRID_HEIGHT - 1; i++) {
+                        walls.push({ x: 0, y: i * CELL_SIZE, width: CELL_SIZE, height: CELL_SIZE });
+                        walls.push({ x: (GRID_WIDTH - 1) * CELL_SIZE, y: i * CELL_SIZE, width: CELL_SIZE, height: CELL_SIZE });
+                    }
+                    break;
+                    
+                case 'circle':
+                    // Create circular boundary
+                    for (let i = 0; i < GRID_WIDTH; i++) {
+                        for (let j = 0; j < GRID_HEIGHT; j++) {
+                            const distance = Math.sqrt(
+                                Math.pow(i - centerX, 2) + 
+                                Math.pow(j - centerY, 2)
+                            );
+                            
+                            if (distance >= radius && distance <= radius + 1) {
+                                walls.push({ x: i * CELL_SIZE, y: j * CELL_SIZE, width: CELL_SIZE, height: CELL_SIZE });
+                            }
+                        }
+                    }
+                    break;
+                    
+                case 'triangle':
+                    // Create triangular boundary
+                    const height = Math.sqrt(3) / 2 * radius * 2;
+                    
+                    for (let i = 0; i < GRID_WIDTH; i++) {
+                        for (let j = 0; j < GRID_HEIGHT; j++) {
+                            const x = i - centerX;
+                            const y = j - centerY;
+                            
+                            // Convert to barycentric coordinates to check if point is on triangle edge
+                            const y0 = radius;
+                            const x1 = -radius / 2;
+                            const y1 = -radius / 2;
+                            const x2 = radius / 2;
+                            const y2 = -radius / 2;
+                            
+                            // Check if point is close to any edge of the triangle
+                            const d0 = Math.abs(y - y0);
+                            const d1 = Math.abs((x - x1) * (y2 - y1) - (y - y1) * (x2 - x1)) / Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+                            const d2 = Math.abs((x - x2) * (y0 - y2) - (y - y2) * (x0 - x2)) / Math.sqrt(Math.pow(y0 - y2, 2) + Math.pow(x0 - x2, 2));
+                            
+                            if (d0 <= 1 || d1 <= 1 || d2 <= 1) {
+                                walls.push({ x: i * CELL_SIZE, y: j * CELL_SIZE, width: CELL_SIZE, height: CELL_SIZE });
+                            }
+                        }
+                    }
+                    break;
+                    
+                case 'hexagon':
+                    // Create hexagonal boundary
+                    const hexRadius = radius * 0.8;
+                    
+                    for (let i = 0; i < GRID_WIDTH; i++) {
+                        for (let j = 0; j < GRID_HEIGHT; j++) {
+                            const x = (i - centerX) * CELL_SIZE;
+                            const y = (j - centerY) * CELL_SIZE;
+                            
+                            // Check if point is on hexagon edge
+                            const angle = Math.atan2(y, x);
+                            const edgeDistance = hexRadius * CELL_SIZE;
+                            const pointDistance = Math.sqrt(x*x + y*y);
+                            
+                            if (Math.abs(pointDistance - edgeDistance) <= CELL_SIZE) {
+                                walls.push({ x: i * CELL_SIZE, y: j * CELL_SIZE, width: CELL_SIZE, height: CELL_SIZE });
+                            }
+                        }
+                    }
+                    break;
+                    
+                case 'rhombus':
+                    // Create rhombus boundary
+                    for (let i = 0; i < GRID_WIDTH; i++) {
+                        for (let j = 0; j < GRID_HEIGHT; j++) {
+                            const x = i - centerX;
+                            const y = j - centerY;
+                            
+                            // Check if point is on rhombus edge
+                            if (Math.abs(Math.abs(x) + Math.abs(y) - radius) <= 1) {
+                                walls.push({ x: i * CELL_SIZE, y: j * CELL_SIZE, width: CELL_SIZE, height: CELL_SIZE });
+                            }
+                        }
+                    }
+                    break;
+                    
+                case 'pentagon':
+                    // Create pentagon boundary
+                    const pentRadius = radius * 0.9;
+                    
+                    for (let i = 0; i < GRID_WIDTH; i++) {
+                        for (let j = 0; j < GRID_HEIGHT; j++) {
+                            const x = (i - centerX) * CELL_SIZE;
+                            const y = (j - centerY) * CELL_SIZE;
+                            
+                            // Check if point is on pentagon edge
+                            const angle = Math.atan2(y, x);
+                            const edgeDistance = pentRadius * CELL_SIZE;
+                            const pointDistance = Math.sqrt(x*x + y*y);
+                            
+                            if (Math.abs(pointDistance - edgeDistance) <= CELL_SIZE) {
+                                walls.push({ x: i * CELL_SIZE, y: j * CELL_SIZE, width: CELL_SIZE, height: CELL_SIZE });
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    // Default to square if shape is not recognized
+                    createOuterBoundary('square');
+            }
+        }
+
+        // Create ghost house
+        function createGhostHouse() {
+            for (let i = 0; i < ghostHouse.width; i++) {
+                for (let j = 0; j < ghostHouse.height; j++) {
+                    if (i === 0 || i === ghostHouse.width - 1 || j === 0 || j === ghostHouse.height - 1) {
+                        walls.push({ 
+                            x: (ghostHouse.x + i) * CELL_SIZE, 
+                            y: (ghostHouse.y + j) * CELL_SIZE, 
+                            width: CELL_SIZE, 
+                            height: CELL_SIZE 
+                        });
+                    }
+                }
+            }
+            
+            // Create ghost house door
+            const doorSide = Math.floor(Math.random() * 4); // 0=top, 1=right, 2=bottom, 3=left
+            let doorX, doorY;
+            
+            switch (doorSide) {
+                case 0: // top
+                    doorX = ghostHouse.x + Math.floor(ghostHouse.width / 2);
+                    doorY = ghostHouse.y;
+                    break;
+                case 1: // right
+                    doorX = ghostHouse.x + ghostHouse.width - 1;
+                    doorY = ghostHouse.y + Math.floor(ghostHouse.height / 2);
+                    break;
+                case 2: // bottom
+                    doorX = ghostHouse.x + Math.floor(ghostHouse.width / 2);
+                    doorY = ghostHouse.y + ghostHouse.height - 1;
+                    break;
+                case 3: // left
+                    doorX = ghostHouse.x;
+                    doorY = ghostHouse.y + Math.floor(ghostHouse.height / 2);
+                    break;
+            }
+            
+            // Remove wall to create door
+            walls = walls.filter(wall => 
+                !(Math.floor(wall.x / CELL_SIZE) === doorX && 
+                  Math.floor(wall.y / CELL_SIZE) === doorY)
+            );
+        }
+
+        // Create inner walls
+        function createInnerWalls() {
+            const centerX = Math.floor(GRID_WIDTH / 2);
+            const centerY = Math.floor(GRID_HEIGHT / 2);
+            const radius = Math.min(centerX, centerY) - 2;
+            
+            // Create symmetrical inner walls based on maze shape
+            switch (mazeShape) {
+                case 'square':
+                    // Create cross-shaped inner walls
+                    for (let i = 3; i < GRID_WIDTH - 3; i++) {
+                        if (i % 4 === 0) {
+                            for (let j = 3; j < GRID_HEIGHT - 3; j += 2) {
+                                if (!isInGhostHouse(i, j)) {
+                                    walls.push({ 
+                                        x: i * CELL_SIZE, 
+                                        y: j * CELL_SIZE, 
+                                        width: CELL_SIZE, 
+                                        height: CELL_SIZE 
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    
+                    for (let j = 3; j < GRID_HEIGHT - 3; j++) {
+                        if (j % 4 === 0) {
+                            for (let i = 3; i < GRID_WIDTH - 3; i += 2) {
+                                if (!isInGhostHouse(i, j)) {
+                                    walls.push({ 
+                                        x: i * CELL_SIZE, 
+                                        y: j * CELL_SIZE, 
+                                        width: CELL_SIZE, 
+                                        height: CELL_SIZE 
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    break;
+                    
+                case 'circle':
+                    // Create concentric circular inner walls
+                    for (let r = radius / 2; r > 2; r -= 2) {
+                        for (let i = 0; i < GRID_WIDTH; i++) {
+                            for (let j = 0; j < GRID_HEIGHT; j++) {
+                                const distance = Math.sqrt(
+                                    Math.pow(i - centerX, 2) + 
+                                    Math.pow(j - centerY, 2)
+                                );
+                                
+                                if (Math.abs(distance - r) <= 0.5 && !isInGhostHouse(i, j)) {
+                                    walls.push({ 
+                                        x: i * CELL_SIZE, 
+                                        y: j * CELL_SIZE, 
+                                        width: CELL_SIZE, 
+                                        height: CELL_SIZE 
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    break;
+                    
+                case 'triangle':
+                    // Create triangular inner walls
+                    for (let r = radius * 0.6; r > 2; r -= 2) {
+                        for (let i = 0; i < GRID_WIDTH; i++) {
+                            for (let j = 0; j < GRID_HEIGHT; j++) {
+                                const x = i - centerX;
+                                const y = j - centerY;
+                                
+                                // Check if point is on inner triangle edge
+                                const y0 = r;
+                                const x1 = -r / 2;
+                                const y1 = -r / 2;
+                                const x2 = r / 2;
+                                const y2 = -r / 2;
+                                
+                                // Check if point is close to any edge of the triangle
+                                const d0 = Math.abs(y - y0);
+                                const d1 = Math.abs((x - x1) * (y2 - y1) - (y - y1) * (x2 - x1)) / Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+                                const d2 = Math.abs((x - x2) * (y0 - y2) - (y - y2) * (x0 - x2)) / Math.sqrt(Math.pow(y0 - y2, 2) + Math.pow(x0 - x2, 2));
+                                
+                                if ((d0 <= 0.5 || d1 <= 0.5 || d2 <= 0.5) && !isInGhostHouse(i, j)) {
+                                    walls.push({ 
+                                        x: i * CELL_SIZE, 
+                                        y: j * CELL_SIZE, 
+                                        width: CELL_SIZE, 
+                                        height: CELL_SIZE 
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    break;
+                    
+                case 'hexagon':
+                case 'pentagon':
+                case 'rhombus':
+                    // Create radial inner walls
+                    const sides = mazeShape === 'hexagon' ? 6 : (mazeShape === 'pentagon' ? 5 : 4);
+                    
+                    for (let i = 0; i < sides; i++) {
+                        const angle = (i * 2 * Math.PI) / sides;
+                        const endX = centerX + Math.cos(angle) * radius;
+                        const endY = centerY + Math.sin(angle) * radius;
+                        
+                        // Create a line from center to edge
+                        const steps = Math.floor(radius);
+                        for (let j = 2; j < steps - 1; j++) {
+                            const x = Math.floor(centerX + Math.cos(angle) * j);
+                            const y = Math.floor(centerY + Math.sin(angle) * j);
+                            
+                            if (!isInGhostHouse(x, y)) {
+                                walls.push({ 
+                                    x: x * CELL_SIZE, 
+                                    y: y * CELL_SIZE, 
+                                    width: CELL_SIZE, 
+                                    height: CELL_SIZE 
+                                });
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+
+        // Create dots
+        function createDots() {
+            for (let i = 1; i < GRID_WIDTH - 1; i++) {
+                for (let j = 1; j < GRID_HEIGHT - 1; j++) {
+                    // Skip if there's a wall here
+                    if (isWall(i * CELL_SIZE, j * CELL_SIZE)) {
+                        continue;
+                    }
+
+                    // Skip ghost house area
+                    if (isInGhostHouse(i, j)) {
+                        continue;
+                    }
+
+                    // Check if position is within the outer boundary
+                    if (isWithinMazeShape(i, j)) {
+                        const char = DOT_CHARS[Math.floor(Math.random() * DOT_CHARS.length)];
+                        const value = DOT_CHARS.indexOf(char) * 10 + 10; // 10-40 points
+                        
+                        dots.push({
+                            x: i * CELL_SIZE + CELL_SIZE / 2,
+                            y: j * CELL_SIZE + CELL_SIZE / 2,
+                            char: char,
+                            value: value
+                        });
+                    }
+                }
+            }
+        }
+
+        // Check if a position is within the maze shape
+        function isWithinMazeShape(gridX, gridY) {
+            const centerX = Math.floor(GRID_WIDTH / 2);
+            const centerY = Math.floor(GRID_HEIGHT / 2);
+            const radius = Math.min(centerX, centerY) - 1;
+            
+            switch (mazeShape) {
+                case 'square':
+                    return gridX > 0 && gridX < GRID_WIDTH - 1 && 
+                           gridY > 0 && gridY < GRID_HEIGHT - 1;
+                    
+                case 'circle':
+                    const distance = Math.sqrt(
+                        Math.pow(gridX - centerX, 2) + 
+                        Math.pow(gridY - centerY, 2)
+                    );
+                    return distance < radius;
+                    
+                case 'triangle':
+                    const x = gridX - centerX;
+                    const y = gridY - centerY;
+                    
+                    // Check if point is inside triangle
+                    const y0 = radius;
+                    const x1 = -radius;
+                    const y1 = -radius;
+                    const x2 = radius;
+                    const y2 = -radius;
+                    
+                    const area = 0.5 * Math.abs(
+                        (x2 - x0) * (y1 - y0) - 
+                        (x1 - x0) * (y2 - y0)
+                    );
+                    
+                    const s = 1 / (2 * area) * (
+                        y0 * (x2 - x1) + 
+                        y1 * (x0 - x2) + 
+                        y2 * (x1 - x0)
+                    );
+                    
+                    const t = 1 / (2 * area) * (
+                        x0 * (y1 - y2) + 
+                        x1 * (y2 - y0) + 
+                        x2 * (y0 - y1)
+                    );
+                    
+                    return s > 0 && t > 0 && (1 - s - t) > 0;
+                    
+                case 'hexagon':
+                    // Check if point is inside hexagon
+                    const hexRadius = radius * 0.8;
+                    const hexDistance = Math.sqrt(
+                        Math.pow(gridX - centerX, 2) + 
+                        Math.pow(gridY - centerY, 2)
+                    );
+                    return hexDistance < hexRadius;
+                    
+                case 'rhombus':
+                    // Check if point is inside rhombus
+                    return Math.abs(gridX - centerX) + Math.abs(gridY - centerY) < radius;
+                    
+                case 'pentagon':
+                    // Check if point is inside pentagon
+                    const pentRadius = radius * 0.9;
+                    const pentDistance = Math.sqrt(
+                        Math.pow(gridX - centerX, 2) + 
+                        Math.pow(gridY - centerY, 2)
+                    );
+                    return pentDistance < pentRadius;
+                    
+                default:
+                    return false;
+            }
+        }
+
+        // Create power dots
+        function createPowerDots() {
+            // Create power dots at strategic positions based on maze shape
+            const centerX = Math.floor(GRID_WIDTH / 2);
+            const centerY = Math.floor(GRID_HEIGHT / 2);
+            const radius = Math.min(centerX, centerY) - 2;
+            
+            // Create 4 power dots based on maze shape
+            let powerPositions = [];
+            
+            switch (mazeShape) {
+                case 'square':
+                    // Place at corners
+                    powerPositions = [
+                        { x: 2, y: 2 },
+                        { x: GRID_WIDTH - 3, y: 2 },
+                        { x: 2, y: GRID_HEIGHT - 3 },
+                        { x: GRID_WIDTH - 3, y: GRID_HEIGHT - 3 }
+                    ];
+                    break;
+                    
+                case 'circle':
+                    // Place at cardinal directions
+                    const circleOffset = Math.floor(radius * 0.7);
+                    powerPositions = [
+                        { x: centerX, y: centerY - circleOffset },
+                        { x: centerX + circleOffset, y: centerY },
+                        { x: centerX, y: centerY + circleOffset },
+                        { x: centerX - circleOffset, y: centerY }
+                    ];
+                    break;
+                    
+                case 'triangle':
+                    // Place at vertices and center
+                    powerPositions = [
+                        { x: centerX, y: centerY - radius + 2 },
+                        { x: centerX - radius + 2, y: centerY + radius - 2 },
+                        { x: centerX + radius - 2, y: centerY + radius - 2 },
+                        { x: centerX, y: centerY }
+                    ];
+                    break;
+                    
+                case 'hexagon':
+                    // Place at alternating vertices
+                    const hexOffset = Math.floor(radius * 0.7);
+                    for (let i = 0; i < 6; i += 2) {
+                        const angle = (i * Math.PI) / 3;
+                        const x = centerX + Math.floor(Math.cos(angle) * hexOffset);
+                        const y = centerY + Math.floor(Math.sin(angle) * hexOffset);
+                        powerPositions.push({ x, y });
+                    }
+                    // Add one in the center if needed
+                    if (powerPositions.length < 4) {
+                        powerPositions.push({ x: centerX, y: centerY });
+                    }
+                    break;
+                    
+                case 'rhombus':
+                    // Place at vertices
+                    powerPositions = [
+                        { x: centerX, y: centerY - radius + 2 },
+                        { x: centerX + radius - 2, y: centerY },
+                        { x: centerX, y: centerY + radius - 2 },
+                        { x: centerX - radius + 2, y: centerY }
+                    ];
+                    break;
+                    
+                case 'pentagon':
+                    // Place at some vertices
+                    const pentOffset = Math.floor(radius * 0.7);
+                    for (let i = 0; i < 5; i += 1) {
+                        if (powerPositions.length < 4) {
+                            const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+                            const x = centerX + Math.floor(Math.cos(angle) * pentOffset);
+                            const y = centerY + Math.floor(Math.sin(angle) * pentOffset);
+                            powerPositions.push({ x, y });
+                        }
+                    }
+                    break;
+                    
+                default:
+                    // Default positions if shape isn't recognized
+                    powerPositions = [
+                        { x: 2, y: 2 },
+                        { x: GRID_WIDTH - 3, y: 2 },
+                        { x: 2, y: GRID_HEIGHT - 3 },
+                        { x: GRID_WIDTH - 3, y: GRID_HEIGHT - 3 }
+                    ];
+            }
+            
+            // Create power dots at the determined positions
+            for (const pos of powerPositions) {
+                // Skip if there's a wall here
+                if (isWall(pos.x * CELL_SIZE, pos.y * CELL_SIZE)) {
+                    continue;
+                }
+                
+                // Skip ghost house area
+                if (isInGhostHouse(pos.x, pos.y)) {
+                    continue;
+                }
+                
+                // Remove any regular dots at this position
+                dots = dots.filter(dot => 
+                    Math.floor(dot.x / CELL_SIZE) !== pos.x || 
+                    Math.floor(dot.y / CELL_SIZE) !== pos.y
+                );
+                
+                powerDots.push({
+                    x: pos.x * CELL_SIZE + CELL_SIZE / 2,
+                    y: pos.y * CELL_SIZE + CELL_SIZE / 2,
+                    char: POWER_DOT_CHAR,
+                    value: 50
+                });
+            }
+        }
+
+    </script>
+    </body> 
+    </html> 

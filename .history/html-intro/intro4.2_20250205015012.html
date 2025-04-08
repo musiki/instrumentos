@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Maths Synth</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #1a1a1a;
+        color: #fff;
+        font-family: monospace;
+      }
+      #container {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      #synthCanvas {
+        border: 2px solid #333;
+        cursor: crosshair;
+      }
+      #controls {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 10px;
+        border-radius: 5px;
+      }
+      .control {
+        margin: 10px 0;
+      }
+      label {
+        display: inline-block;
+        width: 120px;
+      }
+      .value-display {
+        position: absolute;
+        right: 10px;
+        color: #0f0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <canvas id="synthCanvas"></canvas>
+      <div id="controls">
+        <div class="control">
+          <label>Rise (LFO Rate): </label>
+          <input
+            type="range"
+            id="riseTime"
+            min="0.1"
+            max="10"
+            step="0.1"
+            value="1"
+          />
+          <span class="value-display" id="riseValue">1 Hz</span>
+        </div>
+        <div class="control">
+          <label>Fall (LFO Depth): </label>
+          <input
+            type="range"
+            id="fallTime"
+            min="0"
+            max="1000"
+            step="10"
+            value="100"
+          />
+          <span class="value-display" id="fallValue">100</span>
+        </div>
+        <div class="control">
+          <label>MMG Freq: </label>
+          <input
+            type="range"
+            id="mmgFreq"
+            min="20"
+            max="2000"
+            step="1"
+            value="20"
+          />
+          <span class="value-display" id="mmgValue">20 Hz</span>
+        </div>
+        <div class="control">
+          <label>Feedback: </label>
+          <input
+            type="range"
+            id="feedback"
+            min="0"
+            max="1"
+            step="0.01"
+            value="0.5"
+          />
+          <span class="value-display" id="fbValue">0.5</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("synthCanvas");
+      const ctx = canvas.getContext("2d");
+      const riseTimeSlider = document.getElementById("riseTime");
+      const fallTimeSlider = document.getElementById("fallTime");
+      const mmgFreqSlider = document.getElementById("mmgFreq");
+      const feedbackSlider = document.getElementById("feedback");
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      // Initialize Tone.js components for chaotic trill system
+      const synth = new Tone.Synth({
+        oscillator: { type: "triangle" },
+      }).toDestination();
+
+      const lfo = new Tone.LFO({
+        frequency: 1,
+        min: 0,
+        max: 100,
+      });
+
+      // MMG Filter simulation
+      const mmgFilter = new Tone.Filter({
+        frequency: 20,
+        type: "lowpass",
+        rolloff: -24,
+      });
+
+      // Feedback loop for chaotic behavior
+      const feedbackLoop = new Tone.FeedbackDelay(0.01, 0.5);
+
+      // Signal chain
+      const modGain = new Tone.Gain(100);
+      lfo.connect(modGain);
+      modGain.connect(mmgFilter);
+      mmgFilter.connect(feedbackLoop);
+      feedbackLoop.connect(synth.frequency);
+
+      // Update displays
+      function updateDisplays() {
+        document.getElementById(
+          "riseValue"
+        ).textContent = `${riseTimeSlider.value} Hz`;
+        document.getElementById(
+          "fallValue"
+        ).textContent = `${fallTimeSlider.value}`;
+        document.getElementById(
+          "mmgValue"
+        ).textContent = `${mmgFreqSlider.value} Hz`;
+        document.getElementById(
+          "fbValue"
+        ).textContent = `${feedbackSlider.value}`;
+      }
+
+      // Connect controls
+      riseTimeSlider.oninput = (e) => {
+        lfo.frequency.value = parseFloat(e.target.value);
+        updateDisplays();
+      };
+
+      fallTimeSlider.oninput = (e) => {
+        modGain.gain.value = parseFloat(e.target.value);
+        updateDisplays();
+      };
+
+      mmgFreqSlider.oninput = (e) => {
+        mmgFilter.frequency.value = parseFloat(e.target.value);
+        updateDisplays();
+      };
+
+      feedbackSlider.oninput = (e) => {
+        feedbackLoop.feedback.value = parseFloat(e.target.value);
+        updateDisplays();
+      };
+
+      // XY control with trill behavior
+      function updateFromXY(x, y) {
+        const normalizedX = x / canvas.width;
+        const normalizedY = 1 - y / canvas.height;
+
+        // X affects LFO frequency and feedback amount
+        lfo.frequency.value = 0.1 + normalizedX * 19.9;
+        feedbackLoop.feedback.value = normalizedX * 0.9; // Keep feedback under 1 to prevent runaway
+
+        // Y controls filter frequency with trill behavior
+        const baseFreq = 20 + normalizedY * 1980;
+        mmgFilter.frequency.value = baseFreq + lfo.value * modGain.gain.value;
+
+        mmgFreqSlider.value = Math.round(baseFreq);
+        riseTimeSlider.value = lfo.frequency.value;
+        feedbackSlider.value = feedbackLoop.feedback.value;
+
+        updateDisplays();
+      }
+
+      let isMouseDown = false;
+      let lastX = 0;
+      let lastY = 0;
+
+      function draw(x, y) {
+        ctx.fillStyle = "rgba(26, 26, 26, 0.1)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.beginPath();
+        ctx.strokeStyle = "#0f0";
+        ctx.lineWidth = 2;
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+
+        lastX = x;
+        lastY = y;
+      }
+
+      canvas.addEventListener("mousedown", (e) => {
+        isMouseDown = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        Tone.start();
+        lfo.start();
+        synth.triggerAttack();
+        updateFromXY(e.clientX, e.clientY);
+      });
+
+      canvas.addEventListener("mousemove", (e) => {
+        if (isMouseDown) {
+          updateFromXY(e.clientX, e.clientY);
+          draw(e.clientX, e.clientY);
+        }
+      });
+
+      canvas.addEventListener("mouseup", () => {
+        isMouseDown = false;
+        synth.triggerRelease();
+      });
+
+      document.addEventListener(
+        "click",
+        async () => {
+          await Tone.start();
+          console.log("Audio context started");
+        },
+        { once: true }
+      );
+
+      updateDisplays();
+    </script>
+  </body>
+</html>
