@@ -270,3 +270,15 @@
 ## embebidos
 ### arduino
 ### ESP286
+
+
+# clases MOC 2025
+## i1
+intro
+	ética instrumental
+materiales
+interacciones
+entornos 
+## i2
+intro
+	organología especulativa
