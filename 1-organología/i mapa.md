@@ -274,11 +274,48 @@
 
 # clases MOC 2025
 ## i1
-intro
+*intro*
 	ética instrumental
-materiales
-interacciones
-entornos 
+	 intro a ia
+	 hipérfonos
+	 modelos MOAIE. 
+*materiales*
+	timbre y materiales
+	 instrumentalidad
+	 interacción 
+	 8 niveles de interacción de IA
+	 coreOps bash git
+	 mente. notas atomicas. 
+*interacciones*
+	interacción cerebral.
+		  combinatoria. transformacional. cognitiva.
+	escritura
+*entornos* 
 ## i2
-intro
+*intro*
 	organología especulativa
+		organología general. Stiegler
+		 las clasificaciones y categoría
+		 la organología clásica y la organologia critica: los decentramientos. 
+		 del sujeto: barad y cia. el agente como objeto técnico.
+	   materialidad hibrida 2001-2017.
+	     internet
+	       interacción .ubicuidad, agnosticidad, hapticidad y otros atributos de internet. 
+		        youtube, redes sociales, comercio electrónico. 
+	     modelos de inferencia
+	     los 8 niveles de interacción con IA
+		     1. customizacion
+	     mente . repetición espaciada. notas atómicas.
+		     2. ia. fine tuning. text generator. 
+		     3. organograma mantle hood soog. ia estructurada. organium de Magnusson. 
+		     4. webAudio API y vibeCoding
+			     caja negra
+			 5 y otros planes y colab.
+		  teleología y entornos.
+	     
+
+*hibridaciones*
+		 generadores
+		materiales
+		 
+			

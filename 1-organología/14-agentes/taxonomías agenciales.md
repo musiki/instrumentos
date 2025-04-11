@@ -1,0 +1,23 @@
+<iframe src="https://so.zztt.org/plotly/agential_taxonomies.html" title="3D Agential Taxonomies Network" allowfullscreen loading="lazy" style="width:100%; height:100%; filter: invert(1) ; border:0;"</iframe>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

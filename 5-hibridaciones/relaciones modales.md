@@ -6,11 +6,15 @@
 - Independiente de lógica racional
 - Base de la percepción audiovisual integrada
 
+---
+
 ### Dimensiones
 #### **Dimensión Vertical (Relaciones Armónicas)**
 - **Unísono audiovisual** (correspondencia realista)
 - **Consonancia audiovisual** (refuerzo convencional de imagen y sonido)
 - **Disonancia audiovisual** (discordancia perceptual)
+
+---
 
 #### **Dimensión Horizontal (Relaciones Temporales)**
 - **Unísono temporal** (simultaneidad absoluta)
