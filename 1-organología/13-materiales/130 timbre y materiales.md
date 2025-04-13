@@ -1,6 +1,5 @@
 ---
-theme: zztt
-
+theme: zztt-m
 ---
 
 <grid drag="60 55" drop="5 10" bg="black" align="left">

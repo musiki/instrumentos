@@ -1,6 +1,3 @@
-
-
-```yaml
 ---
 type: concepto
 tags:
@@ -20,7 +17,7 @@ connect:
 created: 18-02-2025
 modified: 
 ---
-```
+
 
 ## 1. Contexto y antecedentes  
 El problema central de la inferencia radica en la brecha entre observación y conocimiento. Históricamente, Aristóteles estableció las bases del silogismo deductivo, mientras que el empirismo moderno (Locke, Hume) cuestionó la validez de la inducción. Peirce amplió este marco al introducir la abducción como mecanismo para generar hipótesis explicativas ante datos ambiguos.
@@ -67,7 +64,7 @@ graph TD
 ```
 
 ## 9. Python  
-```python
+```run-python
 import plotly.express as px
 import numpy as np
 
@@ -80,22 +77,6 @@ fig.update_layout(title='Abducción como optimización de explicaciones')
 fig.show()
 ```
 
-## 10. Representación musical  
-```lily
-\version "2.24.0"
-\paper { tagline = ##f  paper-height=#(* 5 cm) paper-width=#(* 20 cm)  system-count=#1 }
-\score {
-    \new Staff {
-        \time 4/4
-        \clef treble
-        \relative c' {
-            \set Score.tempoHideNote = ##t
-            \tempo 4 = 120
-            a4 b c d | e f g a | b c d e | f g a b 
-        }
-    }
-}
-```
 
 ## 11. Preguntas de estudio  
 1. ¿Cómo difiere la abducción de la inducción en términos de certeza?::La abducción produce hipótesis plausibles pero inciertas, mientras la inducción generaliza patrones observados.  
