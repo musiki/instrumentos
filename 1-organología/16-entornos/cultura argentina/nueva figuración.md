@@ -3,7 +3,7 @@
 # luis felipe noé
 ---
 
-![](https://i.imgur.com/D7T4dX7.png)
+![|800](https://i.imgur.com/D7T4dX7.png)
 <br>
 <br>
 <br>
@@ -25,7 +25,7 @@ note: algunos ejes a considerar
 ---
 
 # nueva figuración 
-![](https://i.imgur.com/lrcW0Th.png)
+![|800](https://i.imgur.com/lrcW0Th.png)
 
 ---
 - **noé**: teoría - (Antiestética 1965) , caos como estructura, sobrecarga de marcos.
@@ -43,10 +43,10 @@ note: algunos ejes a considerar
 *1943-2025*
 
 ---
-![](https://i.imgur.com/foOuR5o.png)
+![|800|800](https://i.imgur.com/foOuR5o.png)
 ---
 
-![](https://i.imgur.com/buA13Iy.png)
+![|800|800](https://i.imgur.com/buA13Iy.png)
 
 ---
 
@@ -55,7 +55,7 @@ note: algunos ejes a considerar
 **Julio Viera**
 
 
-![[02a.Viera_Divertimento II-El Reloj_Obra Completa.wav]]
+![|800[02a.Viera_Divertimento II-El Reloj_Obra Completa.wav]]
 
 note: 
 - lipm
@@ -71,15 +71,15 @@ note:
 
 ---
 
-![](https://i.imgur.com/C6T5AzX.png)
+![|800](https://i.imgur.com/C6T5AzX.png)
  <!-- element drag="50 50" drop="0 0"-->
 
-![](https://i.imgur.com/6JR9jzm.png)
+![|800](https://i.imgur.com/6JR9jzm.png)
  <!-- element drag="50 50" drop="50 0"-->
-![](https://i.imgur.com/SmedpuP.png)
+![|800](https://i.imgur.com/SmedpuP.png)
  <!-- element drag="50 50" drop="0 50"-->
 
-![](https://i.imgur.com/SJiUJMe.png)
+![|800](https://i.imgur.com/SJiUJMe.png)
  <!-- element drag="50 50" drop="50 50"-->
 ---
 
