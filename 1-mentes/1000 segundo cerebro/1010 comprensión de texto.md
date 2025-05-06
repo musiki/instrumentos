@@ -2,9 +2,9 @@
 
 - procesos cognitivos que intervienen en la comprensión de texto,
 
-- estructura de superficie
-- [[base proposicional, red interconectada de ideas que construyen la estructura]]
-- [[modelo de situación (el micromundo inferencial que se construye mientras se lee)]].
+- [[estructura de superficie]]
+- [[1011 base proposicional, red interconectada de ideas que construyen la estructura]]
+- [[1012 modelo de situación (el micromundo inferencial que se construye mientras se lee)]].
 - nota atómica
 -  mapa mental
 	- **etiquetas** (en obsidian se generan antecediendo un término con numeral (#)), conceptos transversales,  también denota estados: #borrador #revisar #publicado, y agrupaciones flexibles sin mover archivos.

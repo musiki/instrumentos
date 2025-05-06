@@ -1,3 +1,4 @@
+# definiciones 
 - un término acuñado por Andrej Karpathy es un estilo de programación basado en agentes de IA. 
 - Se describe una tarea o algorítmo en palabras y el agente establece la arquitectura y contenido del código.
 - La comprensión del código no es una variable determinante.
@@ -10,8 +11,7 @@
 
 
 
-### herramientas a Marzo de 2025
-
+# vibe coding (a Marzo de 2025)
 ## vscode forks
 windsurf
 cursor
@@ -30,7 +30,6 @@ replit.ai
 ## basado en prompt
 ollama
 
-
 ## modelos de IA
 
 solar-10.7b (10.7B) https://huggingface.co/upstage/SOLAR-10.7B-Instruct-v1.0
@@ -45,7 +44,7 @@ fimbulvetr-11B-v2 (ficción, solar)
 
 
 
-#### Pasos prácticos para evaluar un modelo
+# Pasos prácticos para evaluar un modelo
 1. **Examinar la ficha de modelo** :
    - Hugging Face proporciona "tarjetas modelo" detalladas que resumen:
      - Detalles de la formación.
@@ -58,7 +57,7 @@ fimbulvetr-11B-v2 (ficción, solar)
 
 ---
 
-#### Recursos recomendados
+# Recursos recomendados
 - **Documentación de Hugging Faces** :
   - Biblioteca Transformers](https://huggingface.co/docs/transformers)
   - Centro de modelos](https://huggingface.co/models)

@@ -1,4 +1,34 @@
-´# Organología
+# mentes
+## segundo cerebro
+### memoria 
+#### anotación
+#### repetición espaciada
+### referenciar
+### comprensión de texto
+## instrumentalidad cerebral
+### matemática
+#### combinatoria
+#### transformacional
+#### convergente
+#### divergente
+### cognitiva
+#### referencialidad síntesis cultural
+#### lateral
+#### conceptual
+#### poética
+#### heurística
+#### científica
+## nooides y agentes autónomos
+### intro a la IA
+#### historia
+#### CNNs
+#### GANs
+#### RNNs
+#### clustering y embedding
+#### aprendizaje por transferencia 
+### prompting
+### pensamiento crítico sobre IA
+# organología
 ## introducción a la organología  
 ### ontogenia de los instrumentos  
 #### instrumentos de guerra y de observación científica  
@@ -12,36 +42,7 @@
 ### ontologías y clasificaciones  
 #### organología histórica  
 #### taxonomización, corpus y ontologías computacionales
-## mentes
-### segundo cerebro
-#### memoria 
-##### anotación
-##### repetición espaciada
-#### referenciar
-### instrumentalidad cerebral
-#### matemática
-##### combinatoria
-##### transformacional
-##### convergente
-##### divergente
-#### cognitiva
-##### referencialidad síntesis cultural
-##### lateral
-##### conceptual
-##### poética
-##### heurística
-##### científica
-### nooides y agentes autónomos
-#### intro a la IA
-##### historia
-##### CNNs
-##### GANs
-##### RNNs
-##### clustering y embedding
-##### aprendizaje por transferencia 
-#### prompting
-#### pensamiento crítico sobre IA
-### 
+
 ## materiales  
 ### propiedades  
 #### anisotropía, conicidad, tensión, flexibilidad, polaridad  
@@ -120,7 +121,7 @@
 #### concierto virtual y real → integración de espacios físicos y digitales  
 #### música en red → streaming, protocolos, latencia en performances colaborativas  
 #### sistemas interactivos → interfaces híbridas, sensores, feedback en red  
-# Acústica
+# acústica
 ## Introducción a la Acústica  
 ### Sonido: Física y Percepción  
 #### Parámetros físicos y musicales. Unidades y magnitudes  
@@ -203,7 +204,7 @@
 #### Reconocimiento de patrones  
 #### Alinealidad en la percepción  
 #### Bandas críticas
-# Producción Musical y Procesamiento de Sonido
+# producción Musical y Procesamiento de Sonido
 ## DAW
 ### Ableton Live
 #### M4L (Max for Live)
