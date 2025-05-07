@@ -1,0 +1,1 @@
+El órgano era el instrumento central en las iglesias, y estaba asociado a lo sagrado.

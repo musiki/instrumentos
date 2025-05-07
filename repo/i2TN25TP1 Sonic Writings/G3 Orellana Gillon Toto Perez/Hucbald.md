@@ -1,0 +1,2 @@
+Hucbaldo de Saint-Amand (840-930 d.C) fue un monje benedictino y teórico musical, que aportó grandes contribuciones a la teoría musical y la educación musical en la edad media: partió de los signos utilizados en los neumas y sumó a estos la notación alfabética para enriquecer la herramienta musical, lo que permitió que la lectura sea mucho más precisa, con más claridad. Hucbaldo tuvo una gran influencia en la actualidad: fue el medio entre los primeros neumas y la intervención de [[Guido D' Arezzo]] en la notación musical.
+

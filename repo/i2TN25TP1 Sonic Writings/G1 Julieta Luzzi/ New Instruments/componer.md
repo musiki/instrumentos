@@ -1,0 +1,2 @@
+Se empieza a trabajar mas con el timbre, las texturas y procesos sonoros, que con notas o melodías.
+La tecnología se convierte en una parte activa de la creación musical. Ya no es una herramienta pasiva para intervenir en un instrumento tradicional, sino que participa directamente en el proceso de creación.

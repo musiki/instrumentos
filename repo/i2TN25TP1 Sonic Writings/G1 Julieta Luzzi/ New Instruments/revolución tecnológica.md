@@ -1,0 +1,2 @@
+Aparecen nuevos instrumentos -mecánicos, eléctricos, electrónicos y digitales- que ya no responden a la lógica de clasificación tradicional de cuerda, viento o percusión.
+En lugar de buscar imitar los instrumentos del pasado, se crean nuevos lenguajes y nuevas formas de tocar.

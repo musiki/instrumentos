@@ -1,0 +1,3 @@
+
+El término "racionalistas musicológicos" se refiere a estudiosos y pensadores de la música que enfatizan la importancia de la razón y la lógica en la comprensión de la música, su historia, teoría y creación. Estos individuos, a diferencia de los que enfatizan la experiencia, la emoción o la intuición, buscan explicar la música a través de principios racionales y sistemas de reglas. 
+Los pitagóricos no sentían que la percepción fuera suficiente: consideraban que para racionalizar la teoría musical era necesario enfatizar la razón, utilizándola para encontrar la lógica dentro de las obras musicales, otorgándole prioridad para poder comprenderla y desglosarla.

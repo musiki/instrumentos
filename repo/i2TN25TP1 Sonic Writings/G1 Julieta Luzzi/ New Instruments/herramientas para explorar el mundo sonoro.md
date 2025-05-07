@@ -1,0 +1,1 @@
+Se empieza a estudiar más sistemáticamente su construcción, afinación, posibilidades tímbricas y mecánicas.

@@ -1,0 +1,1 @@
+ Como por ejemplo, llaves metálicas en los instrumentos de viento o marcos de hierro en los pianos

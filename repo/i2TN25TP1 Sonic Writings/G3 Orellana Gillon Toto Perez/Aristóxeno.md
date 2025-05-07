@@ -1,0 +1,1 @@
+Filósofo griego nacido en Tarenti, sur de Italia y estudió con Aristóteles en Atenas. Él sostenía, en la teoría musical, que las notas de la escala no debían juzgarse mediante las matemáticas, sino a través del oído. Nació al rededor del 375 a.C, y falleció aproximadamente después del 300 a.C

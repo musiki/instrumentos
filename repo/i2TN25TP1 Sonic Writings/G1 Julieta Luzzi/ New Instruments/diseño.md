@@ -1,0 +1,1 @@
+Refiere a toda la interfaz del instrumento digital y en todo lo que debe pensar el creador del mismo para que cumpla con las características que se tiene intención

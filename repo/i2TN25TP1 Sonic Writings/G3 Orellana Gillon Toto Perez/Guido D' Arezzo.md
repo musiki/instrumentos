@@ -1,0 +1,7 @@
+Fue un monje italiano y teórico musical. Conocido como ¨El padre de la notación moderna¨, que a partir del año 1030 d.C. obtendría una descripción precisa de la altura en la notación occidental.
+
+
+Creó un sistema que permitía a los cantantes e instrumentistas poder interpretar piezas musicales que no habían escuchado antes, Siendo muy importante ya que significó la invención de la escritura musical.
+Este sistema contaba con cuatro líneas de pentagrama, las cuales dos de ellas era de color rojo y amarillo representando las notas FA y DO. Además este sistema incluía el uso de tonalidades que eran representadas con un símbolo al principio de la partitura, escrito encima de las líneas del pentagrama.
+A Guido Arezzo también se le atribuyo la creación del solfeo, nombrando las notas (Ut, re ,mi mas conocidas hoy en día como do, re, mi).
+Esta notación de pentagrama resultó útil y se aplico durante dos siglos en los monasterios para notar canciones litúrgicas. Aunque en este sistema no había longitud de nota, tempo, ni ritmo. Problema que fue abordado en Paris en una escuela de polifonía del siglo XII, donde Leonino y Perotino fueron fundamentales en el desarrollo de un nuevos sistema de notación que permitiría a dos o mas voces cantar melodías en paralelo, a lo que se denomino notación modal (modal para medida, tamaño o duración ). Esta notación modal se convirtió en notación mensural lo que permitía la descripción de las duraciones rítmicas y la polifonía, un sistema que se utilizaría hasta el siglo XVII

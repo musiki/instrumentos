@@ -1,0 +1,1 @@
+Para entender la música actual, ya no basta con la escucha, también es necesario observar los objetos y tecnologías que se utilizan para hacerla

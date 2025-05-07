@@ -1,0 +1,3 @@
+Esta tendencia permite concebir a la orquesta como una gran máquina sonora, coordinada por el director, que interpreta fielmente la idea del compositor.
+
+En este contexto también se afianza una idea de música ligada al virtuosismo: el compositor, el intérprete y el director se convierten en canales indispensables para que la obra exista, como si la música tuviera que pasar necesariamente por su interpretación experta.

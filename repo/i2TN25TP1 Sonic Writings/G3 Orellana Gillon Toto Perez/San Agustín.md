@@ -1,0 +1,1 @@
+San Agustín de Hipona (354-430 d.C.) fue un filósofo, teólogo y obispo cristiano que vivió en el norte de África durante el Imperio Romano tardío. Es considerado uno de los padres de iglesia y uno de los pensadores más influyente de la historia del cristianismo.

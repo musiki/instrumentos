@@ -1,0 +1,3 @@
+En los siglos XIV y XV se desarrolló el sistema de tablaturas, un lenguaje idiomático para la musical instrumental: Cada línea del pentagrama representa una cuerda del instrumento.
+
+Este sistema permitía que los instrumentos melódicos (o de una sola voz) pudieran escribirse para poder usar la misma notación que la voz. Aunque para los instrumentos polifónicos (teclado, arpa, alud o guitarra) estas tablaturas resultaron útiles para la notación de voces simultáneas tocadas en un instrumento. Este sistema generó un cambio en la técnica de la interpretación: Hoy en día se sigue utilizando.

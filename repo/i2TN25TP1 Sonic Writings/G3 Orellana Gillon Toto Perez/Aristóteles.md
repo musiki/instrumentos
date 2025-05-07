@@ -1,0 +1,1 @@
+[[Sonic Writing | Fue]] un destacado filósofo griego nacido en Estagira, Grecia. Respecto a la perspectiva musical, Aristóteles consideraba que esta misma atraviesa al ser humano, aprende de ella y la transforma: intervienen las emociones. 

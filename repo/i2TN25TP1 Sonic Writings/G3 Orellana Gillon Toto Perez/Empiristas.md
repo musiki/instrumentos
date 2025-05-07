@@ -1,0 +1,3 @@
+El empirismo se opone al racionalismo, que enfatiza el papel de la razón y la lógica en la formación del conocimiento.
+Basaban su evidencia musical a través de lo sensorial, de la percepción por sobre la teoría, para ellos la experiencia es el punto de partida y la fuente de todo conocimiento. La percepción sensorial, la forma en que nuestros sentidos captan el mundo, es crucial para la adquisición del conocimiento. 
+Los empiristas rechazan que algunas ideas estén presentes en la mente desde el nacimiento. Por esto su evidencia musical estaba basada en la práctica autodidacta, en la experiencia, la escucha y la observación por sus propios medios.

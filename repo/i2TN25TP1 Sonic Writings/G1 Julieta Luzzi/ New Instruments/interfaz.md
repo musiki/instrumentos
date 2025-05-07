@@ -1,0 +1,2 @@
+Refiere a lo que compone al instrumento. Lo que es visible y lo que se puede tocar. El instrumento acústico es la interfaz en si, en los digitales varia.
+Es la conexión que se da con el objeto instrumento, mientras en la tradición se pasan cientos y miles de horas con un instrumento que no es cambiante, con los instrumentos digitales esto se puede perder por la inmediatez y la falta de cuerpo que pueden tener.

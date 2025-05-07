@@ -1,0 +1,1 @@
+En resumen, la tecnología avanza más rápido que la música, a diferencia de los instrumentos acústicos que son procesos lentos de evolución y construcción, a cada momento surgen nuevos instrumentos digitales. Entonces lo estable ya no es el objeto, sino el gesto musical que se adapta y sobrevive al rápido avance tecnológico.
