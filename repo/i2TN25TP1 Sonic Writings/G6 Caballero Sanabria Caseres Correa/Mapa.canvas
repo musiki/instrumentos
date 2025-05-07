@@ -1,19 +1,19 @@
 {
 	"nodes":[
-		{"id":"6ec2ae00f515750b","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/El sueño de ver el sonido.md","x":-1160,"y":-1140,"width":400,"height":400},
-		{"id":"23e873825bb48e3b","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/Del Símbolo a la Señal.md","x":-580,"y":-1040,"width":400,"height":400},
-		{"id":"9ec72c5165670adb","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/Búsqueda de Notación Objetiva (Etnomusicología).md","x":0,"y":-1140,"width":400,"height":400},
-		{"id":"b0508618bebef271","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/Escucha Automática (Machine Listening).md","x":-580,"y":80,"width":400,"height":400},
-		{"id":"15fae3e7a66db48e","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/Conclusión.md","x":480,"y":80,"width":400,"height":400},
-		{"id":"e0813c1f0d644a41","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/Herramientas Modernas y Nuevos Enfoques.md","x":-40,"y":-500,"width":400,"height":400},
-		{"id":"11cbda777f6976f2","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/Análisis Visual en la Era Digital.md","x":-850,"y":-400,"width":400,"height":400}
+		{"id":"23e873825bb48e3b","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/Del Símbolo a la Señal.md","x":-1280,"y":-1840,"width":400,"height":540},
+		{"id":"6ec2ae00f515750b","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/El sueño de ver el sonido.md","x":-1840,"y":-1770,"width":400,"height":400,"color":"4"},
+		{"id":"9ec72c5165670adb","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/Búsqueda de Notación Objetiva (Etnomusicología).md","x":-680,"y":-1880,"width":420,"height":620},
+		{"id":"11cbda777f6976f2","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/Análisis Visual en la Era Digital.md","x":-670,"y":-1130,"width":400,"height":860},
+		{"id":"e0813c1f0d644a41","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/Herramientas Modernas y Nuevos Enfoques.md","x":-110,"y":-900,"width":400,"height":400},
+		{"id":"b0508618bebef271","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/Escucha Automática (Machine Listening).md","x":-120,"y":-370,"width":420,"height":320},
+		{"id":"15fae3e7a66db48e","type":"file","file":"repo/i2TN25TP1 Sonic Writings/G6 Caballero Sanabria Caseres Correa/Conclusión.md","x":440,"y":-410,"width":400,"height":400,"color":"6"}
 	],
 	"edges":[
-		{"id":"1584ae58a52365bd","fromNode":"6ec2ae00f515750b","fromSide":"top","toNode":"23e873825bb48e3b","toSide":"top"},
-		{"id":"a0cfe4fb2acf9c7b","fromNode":"23e873825bb48e3b","fromSide":"top","toNode":"9ec72c5165670adb","toSide":"top"},
-		{"id":"8e93b1785fcbc8b4","fromNode":"9ec72c5165670adb","fromSide":"top","toNode":"11cbda777f6976f2","toSide":"top"},
-		{"id":"ebf66cf645c68260","fromNode":"11cbda777f6976f2","fromSide":"top","toNode":"e0813c1f0d644a41","toSide":"top"},
-		{"id":"a97c4742905c6b3a","fromNode":"e0813c1f0d644a41","fromSide":"top","toNode":"b0508618bebef271","toSide":"top"},
-		{"id":"cb1925ab8330651e","fromNode":"b0508618bebef271","fromSide":"top","toNode":"15fae3e7a66db48e","toSide":"top"}
+		{"id":"aacc45c0b5849ac8","fromNode":"6ec2ae00f515750b","fromSide":"right","toNode":"23e873825bb48e3b","toSide":"left"},
+		{"id":"6e361c6f8bb5d618","fromNode":"23e873825bb48e3b","fromSide":"right","toNode":"9ec72c5165670adb","toSide":"left"},
+		{"id":"8b06868ea3e95707","fromNode":"9ec72c5165670adb","fromSide":"bottom","toNode":"11cbda777f6976f2","toSide":"top"},
+		{"id":"192634f98aa4a41e","fromNode":"b0508618bebef271","fromSide":"right","toNode":"15fae3e7a66db48e","toSide":"left"},
+		{"id":"0109c2267015b322","fromNode":"e0813c1f0d644a41","fromSide":"bottom","toNode":"b0508618bebef271","toSide":"top"},
+		{"id":"92b44a6409d6f2c7","fromNode":"11cbda777f6976f2","fromSide":"right","toNode":"e0813c1f0d644a41","toSide":"left"}
 	]
 }

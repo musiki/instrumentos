@@ -6,7 +6,8 @@ La música artificial es la producida por los instrumentos, la que fue concebida
 
 Este es un tema común a lo largo de la historia musical occidental: en la época medieval, la voz humana se alzaba contra los instrumentos musicales; 
 
-En los siglos XVIII y XIX se da una división en la interpretación musical:\
+En los siglos XVIII y XIX se da una división en la interpretación musical:
+
 - por un lado: un "alma"
 - y por otro: la de las pianolas y los autómatas musicales
 

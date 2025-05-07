@@ -1,8 +1,9 @@
-# La Idea Central:
+# Instrumento sinestésico
+## La Idea Central:
 
 El objetivo es crear una conexión visual directa entre las características del sonido (sus frecuencias) y las imágenes que se muestran. Cuando el sonido cambia en términos de qué tan agudo, grave o medio es, la imagen que se presenta también se transforma o cambia por completo.
 
-## Componentes Clave y su Funcionamiento (Conceptual):
+### Componentes Clave y su Funcionamiento (Conceptual):
 
 ### Captura de Sonido: 
 El instrumento comienza capturando un sonido en tiempo real (por ejemplo, a través de un micrófono).
@@ -47,12 +48,11 @@ Es posible que veas miniaturas de diferentes imágenes. La idea es que la selecc
 Aunque no se ven cables físicos, en TouchDesigner se usan líneas virtuales para conectar los operadores. En la imagen, la disposición de los elementos sugiere que la información del análisis de audio (FFT) se está utilizando para controlar los parámetros de los operadores que manejan las imágenes.
 
 
-# Para Comprenderlo Mejor, Piensa en Ejemplos:
+## Para Comprenderlo Mejor, Piensa en Ejemplos:
 
 Imagina que cuando suena un bajo profundo (graves), aparece una imagen oscura y temblorosa.
 Cuando una voz canta en un rango medio, la imagen se vuelve más nítida y colorida.
 Si hay un sonido agudo como un silbido, la imagen podría volverse borrosa o distorsionada.
 En resumen, el instrumento busca traducir las "cualidades" del sonido (su contenido de frecuencia) en "cualidades" visuales (cambios en las imágenes).
 
-
-![[Imagen de WhatsApp 2025-04-27 a las 20.09.45_0506e359.jpg]]
+![](https://i.imgur.com/RiRrXEr.png)
