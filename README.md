@@ -3,7 +3,8 @@
  
 
 
-# Repositorio de las cátedras de  Instrumentos I y II
+Repositorio de las cátedras
+# Instrumentos I y II
 
 Departamento: Música
 
