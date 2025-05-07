@@ -24,7 +24,8 @@ Los gestos del intérprete afectan el sistema, pero de forma **indirecta, retard
 |**Cultura post-lineal y efímera**|No se graba nada. Cada ejecución desaparece. El instrumento responde de forma distinta si ya fue "activado" ese día.|
 |---|---|
 
-![](<repo/i2TN25TP1 Sonic Writings/G7 Iván de la Peña/a/img.png>)
+![](https://i.imgur.com/WhUUQhg.png)
+
 
 ## **Esquema visual del Umbra Modularis**
 

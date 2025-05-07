@@ -5,7 +5,8 @@ Integrantes: Maggie Gillon, Camila Toto, Antonella Perez, Agostina Orellana
 A partir del capitulo “Writing Music” (traducido al español como Escritura Musical) del libro Sonic Writings de Thor Magnusson, nos inspiramos en la notación musical del teórico italiano Guido D´Arezzo, quien utilizaba líneas de colores para las diferentes alturas tonales. Este nuevo instrumento que creamos pertenece a la familia de los membranófonos y no posee altura. Por este motivo, utilizamos colores con el fin de representar las distintas intensidades de un terremoto, otorgándole una tonalidad especifica a cada una de ellas mediante la escala de magnitud Richter.
 Para ejecutar este instrumento, inventamos una notación que consiste en lo siguiente:
 
-![](<img.png>)
+![](https://i.imgur.com/FcsAqLp.png)
+
 Se presentan 5 líneas de distintos colores con grados que representan la escala sísmica:
 - 2.0 (línea verde) muy leve.
 - 4.0 (línea amarilla) moderado.
@@ -13,7 +14,8 @@ Se presentan 5 líneas de distintos colores con grados que representan la escala
 - 8.0 (línea roja) destructivo.
 - 10.0 (línea negra) desastrozo.
 Esta notación no tiene pulso ni ritmo regular: cada circulo negro representa el golpe de la baqueta. En la membrana del bombo, hay 5 sectores en los cuales se distribuyen estas diferentes intensidades: el grado más fuerte se encuentra ubicado en el centro del parche y los mas leves ubicados en los extremos del mismo.
-![](<img 1.png>)
+![](https://i.imgur.com/8jrT5Kg.png)
+
 
 ## BOMBO SÍSMICO EXPERIMENTAL
 Bombo ubicado sobre el suelo, que al ser percutido en su parche superior, las vibraciones del mismo se trasmiten por su parche inferior, simulando sonidos y vibraciones de un terremoto.
@@ -21,13 +23,17 @@ A su vez genera colores que representan las intensidades valuadas en la escala R
 Al ser ejecutado, como anteriormente se explicó, su vibración sonora se expande a lo largo del espacio, en una forma de simulación, sin necesidad de llegar a las intensidades reales de un terremoto. Se busca que el espectador perciba la experiencia sensorial de este tipo de evento natural, sin sufrir sus consecuencias.
 Este bombo experimental posee parches transparentes. En el interior del mismo se encuentran luces de diferentes colores, las cuales se proyectan a través de la membrana, propagándose así en el lugar. Estas luces no son al azar, sino que cada una corresponde al grado de magnitud Richter.
 
-![](<img.jpeg>)
+![](https://i.imgur.com/gCoy9DX.png)
+
 IMAGEN 1.
-![](<img 1.jpeg>)
+![](https://i.imgur.com/Y4hypSZ.png)
+
 IMAGEN 2.
-![](<img 2.jpeg>)
+![](https://i.imgur.com/CkCjGsa.png)
+
 **IMAGEN 3.**
-![](<img 3.jpeg>)
+![](https://i.imgur.com/awtFRFf.png)
+
 **IMAGEN 4.**
 Código de programación de cada imagen:
 
