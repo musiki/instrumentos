@@ -1,8 +1,11 @@
 #  Umbra Modularis
 ### **Descripción general**
-**Umbra Modularis** es un instrumento digital que no responde directamente a gestos, ni genera sonidos inmediatos. Se basa en **la interacción de sombras proyectadas sobre un espacio virtual tridimensional**, donde cada sombra **modula un sistema de resonancias oculto**, activando respuestas sonoras que no pueden predecirse en tiempo real.  
+**Umbra Modularis** es un instrumento digital que no responde directamente a gestos, ni genera sonidos inm ediatos. Se basa en **la interacción de sombras proyectadas sobre un espacio virtual tridimensional**, donde cada sombra **modula un sistema de resonancias oculto**, activando respuestas sonoras que no pueden predecirse en tiempo real.  
 Los gestos del intérprete afectan el sistema, pero de forma **indirecta, retardada y acumulativa**: el cuerpo opera como si enturbiara un lago sónico.
-**Aplicación de conceptos del MOC**
+
+
+
+### Aplicación de conceptos del MOC
 
 | **Concepto**                                 | **Aplicación**                                                                                                                                                                                 |
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
