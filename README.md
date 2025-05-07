@@ -1,4 +1,4 @@
- <img src="https://i.imgur.com/3dKJzNX.png" width="135px" height="46px" alt="GitHub Logo">
+ <img src="https://i.imgur.com/3dKJzNX.png" width="140px" height="46px" alt="GitHub Logo">
  
  
 
