@@ -34,3 +34,12 @@ y=\sin(x)
     y=\sin(x)
     y=\frac{1}{x}
 ```
+
+
+## etiquetas
+
+materiales
+objetos
+agentes
+interacciones
+entornos

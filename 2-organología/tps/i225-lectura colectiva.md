@@ -16,13 +16,13 @@ Para esto se puede utilizar cualquier método que establezca una estructura jer�
 
 4. cada grupo eligirá la mitad de un capítulo:
 
-g1 : Part I  Instrumentality / New Instruments
+g1 : Part I  Instrumentality / New Instruments OK
 g2: Part I Epistemic Tools / Digital Organology
-g3: Part II Writing Music / Printing Music
+g3: Part II Writing Music / Printing Music OK
 g4: Part II New Languages Machine Notation 
-g5: Part III Inscribing Sound / Recording
-g6: Part III Analysing / Machine Listening 
-g7: Part IV Transductions / New Notations 
+g5: Part III Inscribing Sound / Recording OK
+g6: Part III Analysing / Machine Listening  OK
+g7: Part IV Transductions / New Notations  OK
 g8: Machine Writing / Music in Multimedia 
 
 todos: chequear e incorporar la Parte V Conclusions
