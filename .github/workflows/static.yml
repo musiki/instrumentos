@@ -1,19 +1,4 @@
-name: List Folders in /repo
-
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
-jobs:
-  list-folders:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: List folders inside /repo
-        run: |
-          echo "Listing folders in /repo:"
-          find repo -maxdepth 1 -type d ! -path repo
+- name: Checkout repo
+  uses: actions/checkout@v4
+  with:
+    fetch-depth: 1
