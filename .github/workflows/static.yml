@@ -1,4 +1,25 @@
-- name: Checkout repo
-  uses: actions/checkout@v4
-  with:
-    fetch-depth: 1
+name: List Folders in /repo
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  list-folders:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: List folders inside /repo
+        run: |
+          if [ -d "repo" ]; then
+            echo "Listing folders in /repo:"
+            find repo -maxdepth 1 -type d ! -path repo
+          else
+            echo "Folder 'repo' does not exist."
+          fi
