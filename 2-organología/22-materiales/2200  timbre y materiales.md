@@ -1,6 +1,6 @@
 <grid drag="60 55" drop="5 10" bg="black" align="left">
-## Instrumentalidad, Timbres y Materiales
-#### Clase 2
+# Instrumentalidad, Timbres y Materiales
+### Clase 2
 </grid>
 <grid drag="-5 10" drop="5 -10" bg="black">
 ![[i1-header]]

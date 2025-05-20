@@ -3,7 +3,7 @@
 
 Problemática de la [[Notación musical]], el sonido como algo efímero que perece en cuanto no puede ser anotado. 
 
-Los [[repo/i2TN25TP1 Sonic Writings/G5 Ciro Hernandez/Neumas]] se convierten en un sistema para describir el movimiento de los tonos, tras los [[repo/i2TN25TP1 Sonic Writings/G5 Ciro Hernandez/Neumas]] surgen las [[Notaciones Daseiana y Pentagramada.]]
+Los [[repo/i2N25TP1 Sonic Writings/G5 Ciro Hernandez/Neumas]] se convierten en un sistema para describir el movimiento de los tonos, tras los [[repo/i2N25TP1 Sonic Writings/G5 Ciro Hernandez/Neumas]] surgen las [[Notaciones Daseiana y Pentagramada.]]
 
 Nuestros sistemas de notación si bien son en efecto formas de escribir música, estos sistemas no representan suficientemente los sonidos en si mismos, sino que sirven como instrucciones aproximadas sobre como tocarlos o cantarlos.
 

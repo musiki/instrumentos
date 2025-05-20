@@ -320,22 +320,20 @@ note:
 
 ---
 
+1965 Music for Solo Performer
 
-2013 Michael Beil : Mach Sieben 
+<iframe title="Alvin Lucier - &quot;Music For Solo Performer&quot; (1965)" src="https://www.youtube.com/embed/bIPU2ynqy2Y?feature=oembed" height="150" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.33333 / 1; width: 100%; height: 100%;"></iframe>
+
+---
+
+1969 Alvin Lucier , I'm sitting in a room
+
+<iframe title="Alvin Lucier - I Am Sitting in a Room" src="https://www.youtube.com/embed/bhtO4DsSazc?feature=oembed" height="150" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.33333 / 1; width: 100%; height: 100%;"></iframe>
+
+---
+2000 Michael Beil : Mach Sieben 
 
 <iframe title="Michael Beil :: Mach Sieben" src="https://www.youtube.com/embed/iYTpCpb8Hpk?start=819&amp;feature=oembed" height="113" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.76991 / 1; width: 100%; height: 100%;"></iframe>
-
----
-
-Tomoko Sauvage (first piece using feedback)
-
-https://www.youtube.com/watch?v=UOe9ZOobJeg&t=1s
-
----
-
-Puachi Sasaki
-<iframe title="&quot;k'uKu&quot; by Pauchi Sasaki" src="https://www.youtube.com/embed/nxzEZDscSCU?feature=oembed" height="113" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.76991 / 1; width: 100%; height: 100%;"></iframe>
-
 
 ---
 
@@ -343,8 +341,22 @@ Puachi Sasaki
 
 <iframe title="LARA STANIC: SPIELFELD FEEDBACK  (2003)" src="https://www.youtube.com/embed/D4KMkH9hz8w?start=1&amp;feature=oembed" height="113" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.76991 / 1; width: 100%; height: 100%;"></iframe>
 
+---
+
+2006 Adam Basanta 
+
+<iframe title="The sound of empty space" height="270" width="480" src="https://player.vimeo.com/video/120993966?app_id=122963" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.77778 / 1; width: 100%; height: 100%;"></iframe>
+
 
 ---
+
+2013 Tomoko Sauvage (first piece using feedback)
+
+<iframe title="Tomoko SAUVAGE PRESENCES électronique 2013" src="https://www.youtube.com/embed/UOe9ZOobJeg?start=1&amp;feature=oembed" height="113" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.76991 / 1; width: 100%; height: 100%;"></iframe>
+
+---
+
+
 2013 Robin Fox and Eugene Ughetti Transducer
 
 <iframe title="Eugene Ughetti and Robin Fox - Transducer (finale)" src="https://www.youtube.com/embed/SDUYSFHNJKs?feature=oembed" height="113" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.76991 / 1; width: 100%; height: 100%;"></iframe>
@@ -356,16 +368,51 @@ Como ya indica el título Transducer, esta pieza se centra en los llamados trans
 
 ---
 
-Adam Basanta 
-
-<iframe title="The sound of empty space" height="270" width="480" src="https://player.vimeo.com/video/120993966?app_id=122963" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.77778 / 1; width: 100%; height: 100%;"></iframe>
-
----
 
 ChaGPT to recreate the same image
 
-https://www.instagram.com/reel/DJE9r9rTqZi/
+<iframe src="https://www.instagram.com/reel/DJE9r9rTqZi/" allow="fullscreen" allowfullscreen="" style="height:100%;width:100%; aspect-ratio: 16 / 9; "></iframe>
 
+---
+
+
+# agentes no-humanos
+
+
+
+---
+
+2013 Robin Meier , Truce 
+
+<iframe title="Truce: Strategies for Post-Apocalyptic Computation - report" src="https://www.youtube.com/embed/JkJZaN2nshU?feature=oembed" height="113" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.76991 / 1; width: 100%; height: 100%;"></iframe>
+
+---
+
+2013 David Rothenberg + balllenas Beluga
+
+<iframe title="El jazzista David Rothenberg toca música acompañado de ballenas Beluga en Rusia mp4" src="https://www.youtube.com/embed/b_smFnLZT8Y?feature=oembed" height="150" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.33333 / 1; width: 100%; height: 100%;"></iframe>
+
+---
+
+2017 Pájaros sobre guitarras - Céleste Boursier-Mougenot Installation 
+
+<iframe title="Birds on guitars - Céleste Boursier-Mougenot installation, Denmark 2017" src="https://www.youtube.com/embed/Gi_BBe8vfE4?feature=oembed" height="113" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.76991 / 1; width: 100%; height: 100%;"></iframe>
+
+---
+
+2017 Ariel Guzik - Holoturian 
+
+![](https://i.imgur.com/8jAvuTv.png)
+
+note: Arts Catalyst ha editado recientemente esta pequeña publicación con motivo de la prevista botadura del Holoturian de Ariel Guzik en el Golfo de California en 2017 , tras exhaustivas pruebas submarinas en un tanque de agua.
+
+Durante los últimos 10 años, el artista Ariel Guzik ha buscado una forma de comunicarse con ballenas y delfines. El proyecto de Guzik ha abarcado la creación de instrumentos subacuáticos, expediciones para contactar con ballenas y delfines frente a las costas de Baja California, Costa Rica y Escocia, y grabaciones de sonido de estos extraordinarios encuentros.
+
+En 2015, Arts Catalyst encargó a Guzik la creación de su Holoturian, un instrumento de resonancia submarina diseñado para comunicarse con ballenas y delfines en las profundidades marinas. Holoturian se expuso como instalación en el Festival de Arte de Edimburgo, por encargo del festival y de Arts Catalyst. Incorporaba el instrumento, que llenaba el evocador recinto de sonido resonante, junto con objetos, dibujos y películas del proyecto de investigación del artista, de una década de duración, que incluía un viaje de campo del artista y su equipo con Arts Catalyst a Moray Firth, en el norte de Escocia, para encontrarse con la población de delfines mulares que viven allí.
+
+El libro contiene imágenes de la investigación y la instalación, junto con textos míos en los que analizo la investigación de Guzik hasta la fecha y lo que dicen las investigaciones recientes sobre si puede decirse que los cetáceos utilizan el lenguaje o tienen cultura, y del científico marino y conservacionista Mark Simmonds OBE sobre los retos a los que se enfrentan estas criaturas inteligentes en nuestros amenazados océanos llenos de sonidos de hoy en día.
+
+---
 
 # 🧠 Central Pattern Generator (CPG)
 
@@ -473,7 +520,7 @@ note:
 ---
 
 
-# TP Agentes , Amplificación y Feedback
+## TP Agentes , Amplificación y Feedback
 
 1. Seleccionar 1 o 2 tipos de agentes para investigar: humanos, no-humanos (insectos, plantas, animales, fúngicos) y su agenciamiento musical.
 2. Hacer un texto de 300-1000 palabras sobre :
@@ -489,3 +536,10 @@ note:
 
 
 ---
+
+fuentes bibliográficas sobre biomúsica 
+
+https://drive.google.com/drive/folders/1LkPhJ34JUfrxYCihOeMpkmbNN9Xkp4RQ?usp=drive_link
+
+---
+

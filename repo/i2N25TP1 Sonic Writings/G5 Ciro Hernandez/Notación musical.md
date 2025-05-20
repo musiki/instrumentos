@@ -11,6 +11,6 @@ Sistema de representación grafica que permite codificar, registrar y comunicar 
 
 #### Conexiones
 
-1) [[repo/i2TN25TP1 Sonic Writings/G5 Ciro Hernandez/Neumas]]: primeros signos gráficos que indicaban el contorno melódico (siglo IX).
+1) [[repo/i2N25TP1 Sonic Writings/G5 Ciro Hernandez/Neumas]]: primeros signos gráficos que indicaban el contorno melódico (siglo IX).
 
 2) Notación Pentagramada y Daseiana: Desarrollos posteriores que intentaron representar alturas mas precisas.
