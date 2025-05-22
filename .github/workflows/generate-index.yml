@@ -1,0 +1,33 @@
+name: Generate index.html for GitHub Pages
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  generate-index:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Generate index.html in /repo
+        run: |
+          echo "<!DOCTYPE html><html><body><h1>Available Instruments</h1><ul>" > repo/index.html
+          for folder in repo/*; do
+            if [ -d "$folder" ] && [ -f "$folder/index.html" ]; then
+              name=$(basename "$folder")
+              echo "<li><a href=\"./$name/\">$name</a></li>" >> repo/index.html
+            fi
+          done
+          echo "</ul></body></html>" >> repo/index.html
+
+      - name: Commit and push index.html
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add repo/index.html
+          git commit -m "Auto-generate repo/index.html"
+          git push

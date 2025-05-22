@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CanvasSynth 75L Fix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #222;
+        }
+    </style>
+</head>
+<body>
+    <script>
+     
+
+
+function
+runSynthesizer_75L_Canvas_KeyFix_ReverbFix() {
+    const APP_NAME = "CanvasSynth_75L_Fix";
+    const NUM_OSCILLATOR_SECTIONS = 4;
+    const FREQUENCY_SWEEP_SECTION_WIDTH_RATIO = 0.5;
+    const OSCILLATOR_CONFIGS = [
+        { name: 'Sinusoidal', type: 'sine', triggerKey: 'C', sustainKey: 'D', baseFrequency: 261.63, color: '#FFD700' },
+        { name: 'Diente de Sierra', type: 'sawtooth', triggerKey: 'V', sustainKey: 'F', baseFrequency: 261.63, color: '#FF6347' },
+        { name: 'Cuadrada', type: 'square', triggerKey: 'B', sustainKey: 'G', baseFrequency: 261.63, color: '#ADFF2F' },
+        { name: 'Triangular', type: 'triangle', triggerKey: 'N', sustainKey: 'H', baseFrequency: 261.63, color: '#87CEFA' }
+    ];
+    let oscillatorChannels = [];
+    let audioContext;
+    const pressedKeys = {};
+    function initializeAudioContext() {
+        try {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) throw new Error("Web Audio API no soportada.");
+            audioContext = new AudioContextClass();
+            if (audioContext.state === 'suspended')
+                console.warn(`[${APP_NAME}] AudioContext suspendido. Requiere interacción del usuario.`);
+        } catch (e) {
+            console.error(`[${APP_NAME}] Error fatal al inicializar AudioContext: `, e);
+            alert("Error Crítico: Falló la inicialización de Web Audio API.");
+            throw e;
+        }
+    }
+    function createElementWithStyles(tagName, styles = {}, textContent = '') {
+        const element = document.createElement(tagName);
+        Object.assign(element.style, styles);
+        if (textContent)
+            element.textContent = textContent;
+        return element;
+    }
+    function createSliderControl(label, min, max, initial, step, onChange) {
+        const container = createElementWithStyles('div', { display: 'flex', alignItems: 'center', marginBottom: '8px', fontSize: '12px', minHeight: '20px' });
+        const labelElement = createElementWithStyles('span', { marginRight: '8px', minWidth: '65px', fontSize: '11px', color: '#DDD' }, label + ':');
+        const slider = createElementWithStyles('input', { flexGrow: '1', marginRight: '8px', height: '16px' });
+        slider.type = 'range';
+        slider.min = min;
+        slider.max = max;
+        slider.value = initial;
+        slider.step = step;
+        const valueDisplay = createElementWithStyles('span', { minWidth: '30px', textAlign: 'right', fontSize: '11px', color: '#FFF' }, parseFloat(initial).toFixed(2));
+        slider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            valueDisplay.textContent = value.toFixed(2);
+            if (onChange)
+                onChange(value);
+        });
+        container.append(labelElement, slider, valueDisplay);
+        return container;
+    }
+    function createSwitchControl(label, onChange, initial = false) {
+        const container = createElementWithStyles('div', { display: 'flex', alignItems: 'center', marginBottom: '8px', cursor: 'pointer', fontSize: '12px', minHeight: '20px' });
+        const labelElement = createElementWithStyles('span', { marginRight: '8px', minWidth: '65px', fontSize: '11px', color: '#DDD' }, label + ':');
+        const switchView = createElementWithStyles('div', { width: '36px', height: '18px', backgroundColor: initial ? '#4CAF50' : '#ccc', borderRadius: '9px', position: 'relative', transition: 'all 0.2s ease' });
+        const switchKnob = createElementWithStyles('div', { width: '16px', height: '16px', backgroundColor: 'white', borderRadius: '50%', position: 'absolute', top: '1px', left: initial ? '19px' : '1px', transition: 'all 0.2s ease' });
+        switchView.appendChild(switchKnob);
+        let current = initial;
+        container.addEventListener('click', () => {
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().catch(err => console.error("Error en resume desde switch:", err));
+            }
+            current = !current;
+            switchView.style.backgroundColor = current ? '#4CAF50' : '#ccc';
+            switchKnob.style.left = current ? '19px' : '1px';
+            if (onChange)
+                onChange(current);
+        });
+        container.append(labelElement, switchView);
+        return container;
+    }
+    function createSelectControl(label, options, onChange, initial) {
+        const container = createElementWithStyles('div', { display: 'flex', alignItems: 'center', marginBottom: '8px', fontSize: '12px', minHeight: '20px' });
+        const labelElement = createElementWithStyles('span', { marginRight: '8px', minWidth: '65px', fontSize: '11px', color: '#DDD' }, label + ':');
+        const selectElement = createElementWithStyles('select', { flexGrow: '1', fontSize: '11px', height: '20px', border: '1px solid #555', background: '#333', color: '#FFF', borderRadius: '3px' });
+        options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt;
+            option.textContent = opt;
+            selectElement.appendChild(option);
+        });
+        selectElement.value = initial || options[0];
+        selectElement.addEventListener('change', (e) => {
+            if (onChange)
+                onChange(e.target.value);
+        });
+        container.append(labelElement, selectElement);
+        return container;
+    }
+    function drawSineWave(ctx, w, h, color) { ctx.clearRect(0,0,w,h); ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,h/2); for(let x=0;x<=w;x++){const y=h/2+(h/2-5)*Math.sin((x/w)*2*Math.PI*2); ctx.lineTo(x,y);} ctx.stroke(); }
+    function drawSawtoothWave(ctx, w, h, color) { ctx.clearRect(0,0,w,h); ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); const cy=2, cW=w/cy; for(let c=0;c<cy;c++){const sX=c*cW; ctx.moveTo(sX,h-5); ctx.lineTo(sX+cW,5); if(c<cy-1){ctx.lineTo(sX+cW,h-5);}} ctx.stroke(); }
+    function drawSquareWave(ctx, w, h, color) { ctx.clearRect(0,0,w,h); ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); const cy=2,cW=w/cy,hY=5,lY=h-5; for(let c=0;c<cy;c++){const sX=c*cW; ctx.moveTo(sX,hY); ctx.lineTo(sX+cW/2,hY); ctx.lineTo(sX+cW/2,lY); ctx.lineTo(sX+cW,lY); if(c<cy-1){ctx.lineTo(sX+cW,hY);}} ctx.stroke(); }
+    function drawTriangleWave(ctx, w, h, color) { ctx.clearRect(0,0,w,h); ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath(); const cy=2,cW=w/cy,hY=5,lY=h-5,mY=h/2; for(let c=0;c<cy;c++){const sX=c*cW; ctx.moveTo(sX,mY); ctx.lineTo(sX+cW/4,hY); ctx.lineTo(sX+(3*cW/4),lY); ctx.lineTo(sX+cW,mY);} ctx.stroke(); }
+    function createWaveformDisplay(type, color, width, height) {
+        const canvas = createElementWithStyles('canvas', {width:`${width}px`,height:`${height}px`,borderRadius:'4px',display:'block',margin:'5px auto'});
+        canvas.width=width; canvas.height=height; const ctx=canvas.getContext('2d'); if(!ctx){return createElementWithStyles('div',{},'Canvas Error');}
+        const drawFuncs = {sine:drawSineWave, sawtooth:drawSawtoothWave, square:drawSquareWave, triangle:drawTriangleWave};
+        if(drawFuncs[type]) drawFuncs[type](ctx,width,height,color); else ctx.fillText('?',width/2,height/2+6);
+        return canvas;
+    }
+    function OscillatorChannel(type, baseFreq, color) {
+        if (!audioContext)
+            throw new Error("AudioContext no disponible.");
+        this.waveType = type;
+        this.baseFrequency = baseFreq;
+        this.currentFrequency = baseFreq;
+        this.color = color;
+        this.oscillatorNode = null;
+        this.isPlaying = false;
+        this.isSustainActive = false;
+        this.volumeGainNode = audioContext.createGain();
+        this.volumeGainNode.gain.value = 0.5;
+        this.sustainControlGainNode = audioContext.createGain();
+        this.sustainControlGainNode.gain.value = 1.0;
+        this.reverb = createReverbEffect(audioContext);
+        this.delay = createDelayEffect(audioContext);
+        this.overdrive = createOverdriveEffect(audioContext);
+        this.tremolo = createTremoloEffect(audioContext);
+        this.channelOutputNode = audioContext.createGain();
+        this.volumeGainNode.connect(this.sustainControlGainNode);
+        this.sustainControlGainNode.connect(this.reverb.input);
+        this.reverb.output.connect(this.delay.input);
+        this.delay.output.connect(this.overdrive.input);
+        this.overdrive.output.connect(this.tremolo.input);
+        this.tremolo.output.connect(this.channelOutputNode);
+        this.channelOutputNode.connect(audioContext.destination);
+    }
+    OscillatorChannel.prototype.playSound = function (freq) {
+        if (!audioContext || audioContext.state !== 'running') {
+            console.warn(`[${APP_NAME}] Play prevented. AC State: ${audioContext?.state}`);
+            return;
+        }
+        if (this.oscillatorNode) {
+            try {
+                this.oscillatorNode.onended = null;
+                this.oscillatorNode.stop(0);
+                this.oscillatorNode.disconnect();
+            } catch (e) { }
+            this.oscillatorNode = null;
+        }
+        this.isPlaying = false;
+        this.currentFrequency = freq || this.baseFrequency;
+        this.oscillatorNode = audioContext.createOscillator();
+        this.oscillatorNode.type = this.waveType;
+        this.oscillatorNode.frequency.setValueAtTime(this.currentFrequency, audioContext.currentTime);
+        this.oscillatorNode.connect(this.volumeGainNode);
+        this.oscillatorNode.start(audioContext.currentTime);
+        this.isPlaying = true;
+        const releaseTime = 0.3, currentOscillator = this.oscillatorNode;
+        if (!this.isSustainActive) {
+            this.sustainControlGainNode.gain.cancelScheduledValues(0);
+            this.sustainControlGainNode.gain.setValueAtTime(1.0, 0);
+            this.sustainControlGainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + releaseTime);
+            currentOscillator.stop(audioContext.currentTime + releaseTime + 0.05);
+            currentOscillator.onended = () => {
+                if (this.oscillatorNode === currentOscillator && !this.isSustainActive) {
+                    this.isPlaying = false;
+                    this.sustainControlGainNode.gain.setValueAtTime(1.0, 0);
+                    this.oscillatorNode = null;
+                }
+            };
+        } else {
+            this.sustainControlGainNode.gain.cancelScheduledValues(0);
+            this.sustainControlGainNode.gain.setValueAtTime(1.0, 0);
+            currentOscillator.onended = () => {
+                if (this.oscillatorNode === currentOscillator) {
+                    this.isPlaying = false;
+                    this.oscillatorNode = null;
+                }
+            };
+        }
+    };
+    OscillatorChannel.prototype.stopSound = function () {
+        if (!this.isPlaying || !this.oscillatorNode || this.isSustainActive)
+            return;
+        const releaseTime = 0.2, currentOscillator = this.oscillatorNode;
+        this.sustainControlGainNode.gain.cancelScheduledValues(0);
+        this.sustainControlGainNode.gain.setValueAtTime(this.sustainControlGainNode.gain.value, 0);
+        this.sustainControlGainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + releaseTime);
+        currentOscillator.onended = null;
+        currentOscillator.stop(audioContext.currentTime + releaseTime + 0.05);
+        currentOscillator.onended = () => {
+            if (this.oscillatorNode === currentOscillator) {
+                this.isPlaying = false;
+                this.sustainControlGainNode.gain.setValueAtTime(1.0, 0);
+                this.oscillatorNode = null;
+            }
+        };
+    };
+    OscillatorChannel.prototype.releaseSustain = function () {
+        if (!this.isPlaying || !this.oscillatorNode)
+            return;
+        const releaseTime = 0.5, currentOscillator = this.oscillatorNode;
+        this.sustainControlGainNode.gain.cancelScheduledValues(0);
+        this.sustainControlGainNode.gain.setValueAtTime(this.sustainControlGainNode.gain.value, 0);
+        this.sustainControlGainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + releaseTime);
+        currentOscillator.onended = null;
+        currentOscillator.stop(audioContext.currentTime + releaseTime + 0.05);
+        currentOscillator.onended = () => {
+            if (this.oscillatorNode === currentOscillator) {
+                this.isPlaying = false;
+                this.sustainControlGainNode.gain.setValueAtTime(1.0, 0);
+                this.oscillatorNode = null;
+            }
+        };
+    };
+    OscillatorChannel.prototype.setVolume = function (v) {
+        if (this.volumeGainNode)
+            this.volumeGainNode.gain.setValueAtTime(v, 0);
+    };
+    OscillatorChannel.prototype.toggleSustain = function (active) {
+        this.isSustainActive = active;
+        if (!active && this.isPlaying) {
+            this.releaseSustain();
+        } else if (active && this.isPlaying) {
+            this.sustainControlGainNode.gain.cancelScheduledValues(0);
+            this.sustainControlGainNode.gain.setValueAtTime(1.0, 0);
+        }
+    };
+    OscillatorChannel.prototype.setFrequency = function (f) {
+        this.currentFrequency = f;
+        if (this.isPlaying && this.oscillatorNode)
+            this.oscillatorNode.frequency.linearRampToValueAtTime(f, audioContext.currentTime + 0.05);
+    };
+    // Efectos de Audio (Corregidos: Aseguran que devuelven objetos con input/output y corrigen generateImpulseResponse)
+    function createReverbEffect(actx) {
+        const inputNode = actx.createGain();
+        const outputNode = actx.createGain();
+        const convolver = actx.createConvolver();
+        const wetGain = actx.createGain();
+        const dryGain = actx.createGain();
+        let isActive = false;
+        let decayTime = 2;
+        let roomType = 'Mediana';
+        inputNode.connect(dryGain);
+        dryGain.connect(outputNode);
+        inputNode.connect(wetGain);
+        wetGain.connect(convolver);
+        convolver.connect(outputNode);
+        function generateImpulseResponse(duration, decay) {
+            const sampleRate = actx.sampleRate;
+            const length = sampleRate * duration;
+            const impulseBuffer = actx.createBuffer(2, length, sampleRate); // Create ONE AudioBuffer
+            const impulseL = impulseBuffer.getChannelData(0);
+            const impulseR = impulseBuffer.getChannelData(1);
+            for (let i = 0; i < length; i++) {
+                const decayFactor = Math.pow(1 - i / length, decay);
+                impulseL[i] = (Math.random() * 2 - 1) * decayFactor;
+                impulseR[i] = (Math.random() * 2 - 1) * decayFactor;
+            }
+            return impulseBuffer; // Return the AudioBuffer
+        }
+        function updateImpulseResponse() {
+            let duration;
+            switch (roomType) {
+                case 'Pequeña': duration = 1.0; break;
+                case 'Mediana': duration = 2.0; break;
+                case 'Grande': duration = 3.5; break;
+                default: duration = 2.0;
+            }
+            try {
+                convolver.buffer = generateImpulseResponse(duration, decayTime);
+            } catch (e) {
+                console.error("Reverb IR Error:", e);
+            }
+        }
+        updateImpulseResponse();
+        wetGain.gain.value = 0;
+        dryGain.gain.value = 1;
+        return {
+            input: inputNode,
+            output: outputNode,
+            setActive: (active) => {
+                isActive = active;
+                wetGain.gain.linearRampToValueAtTime(isActive ? 0.5 : 0, actx.currentTime + 0.1);
+                dryGain.gain.linearRampToValueAtTime(isActive ? 0.8 : 1, actx.currentTime + 0.1);
+            },
+            setParams: (params) => {
+                let updateIR = false;
+                if (params.decay !== undefined && params.decay !== decayTime) {
+                    decayTime = Math.max(0.5, Math.min(params.decay, 10));
+                    updateIR = true;
+                }
+                if (params.type !== undefined && params.type !== roomType) {
+                    roomType = params.type;
+                    updateIR = true;
+                }
+                if (updateIR)
+                    updateImpulseResponse();
+            }
+        };
+    }
+    function createDelayEffect(actx) {
+        const inputNode = actx.createGain();
+        const outputNode = actx.createGain();
+        const delayNode = actx.createDelay(5.0);
+        const feedbackGain = actx.createGain();
+        const wetGain = actx.createGain();
+        const dryGain = actx.createGain();
+        let isActive = false;
+        let delayTime = 0.4;
+        let feedbackAmount = 0.4;
+        inputNode.connect(dryGain);
+        dryGain.connect(outputNode);
+        inputNode.connect(delayNode);
+        delayNode.connect(wetGain);
+        wetGain.connect(outputNode);
+        delayNode.connect(feedbackGain);
+        feedbackGain.connect(delayNode);
+        delayNode.delayTime.value = delayTime;
+        feedbackGain.gain.value = 0;
+        wetGain.gain.value = 0;
+        dryGain.gain.value = 1;
+        return {
+            input: inputNode,
+            output: outputNode,
+            setActive: (active) => {
+                isActive = active;
+                feedbackGain.gain.linearRampToValueAtTime(isActive ? feedbackAmount : 0, actx.currentTime + 0.1);
+                wetGain.gain.linearRampToValueAtTime(isActive ? 0.5 : 0, actx.currentTime + 0.1);
+                dryGain.gain.linearRampToValueAtTime(isActive ? 0.8 : 1, actx.currentTime + 0.1);
+            },
+            setParams: (params) => {
+                if (!isActive && params.type !== 'Off')
+                    return;
+                let newDelayTime = delayTime;
+                let newFeedbackAmount = feedbackAmount;
+                let newWetLevel = (wetGain.gain.value > 0 || params.type !== 'Off') ? 0.5 : 0;
+                switch (params.type) {
+                    case 'Corto': newDelayTime = 0.15; newFeedbackAmount = 0.25; newWetLevel = 0.4; break;
+                    case 'Medio': newDelayTime = 0.4; newFeedbackAmount = 0.4; newWetLevel = 0.5; break;
+                    case 'Largo': newDelayTime = 0.8; newFeedbackAmount = 0.55; newWetLevel = 0.6; break;
+                    default: newFeedbackAmount = 0; newWetLevel = 0; break;
+                }
+                delayTime = newDelayTime;
+                feedbackAmount = newFeedbackAmount;
+                delayNode.delayTime.linearRampToValueAtTime(delayTime, actx.currentTime + 0.05);
+                if (isActive || params.type === 'Off') {
+                    feedbackGain.gain.linearRampToValueAtTime(isActive ? newFeedbackAmount : 0, actx.currentTime + 0.05);
+                    wetGain.gain.linearRampToValueAtTime(isActive ? newWetLevel : 0, actx.currentTime + 0.05);
+                    dryGain.gain.linearRampToValueAtTime(isActive && newWetLevel > 0 ? 0.8 : 1, actx.currentTime + 0.05);
+                }
+            }
+        };
+    }
+    function createOverdriveEffect(actx) {
+        const inputNode = actx.createGain();
+        const outputNode = actx.createGain();
+        const waveShaper = actx.createWaveShaper();
+        const preGain = actx.createGain();
+        const postGain = actx.createGain();
+        const dryGain = actx.createGain();
+        let amount = 0;
+        function createDistortionCurve(distortionAmount) {
+            const k = Math.max(0,distortionAmount * 100);
+            const nSamples = 2048;
+            const curve = new Float32Array(nSamples);
+            const deg = Math.PI / 180;
+            for (let i = 0; i < nSamples; i++) {
+                const x = i * 2 / nSamples - 1;
+                curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+            }
+            return curve;
+        }
+        waveShaper.curve = createDistortionCurve(0);
+        waveShaper.oversample = '2x';
+        inputNode.connect(dryGain);
+        dryGain.connect(outputNode);
+        inputNode.connect(preGain);
+        preGain.connect(waveShaper);
+        waveShaper.connect(postGain);
+        postGain.connect(outputNode);
+        preGain.gain.value = 1;
+        postGain.gain.value = 0;
+        dryGain.gain.value = 1;
+        return {
+            input: inputNode,
+            output: outputNode,
+            setParams: (params) => {
+                amount = Math.max(0, Math.min(params.amount, 1));
+                preGain.gain.linearRampToValueAtTime(1 + amount * 1.5, actx.currentTime + 0.05);
+                waveShaper.curve = createDistortionCurve(amount * 0.25);
+                postGain.gain.linearRampToValueAtTime(amount * 0.8, actx.currentTime + 0.05);
+                dryGain.gain.linearRampToValueAtTime(1 - amount * 0.6, actx.currentTime + 0.05);
+            }
+        };
+    }
+    function createTremoloEffect(actx) {
+        const inputNode = actx.createGain();
+        const outputNode = actx.createGain();
+        const depthGain = actx.createGain();
+        const lfo = actx.createOscillator();
+        let isActive = false;
+        let rate = 5;
+        let currentDepth = 0.5;
+        lfo.type = 'sine';
+        lfo.frequency.value = rate;
+        depthGain.gain.value = 0;
+        lfo.connect(depthGain);
+        depthGain.connect(outputNode.gain);
+        inputNode.connect(outputNode);
+        outputNode.gain.value = 1;
+        lfo.start();
+        return {
+            input: inputNode,
+            output: outputNode,
+            setActive: (active) => {
+                isActive = active;
+                const targetDepth = active ? currentDepth : 0;
+                depthGain.gain.linearRampToValueAtTime(targetDepth, actx.currentTime + 0.05);
+            },
+            setParams: (params) => {
+                rate = Math.max(0.1, Math.min(params.rate, 20));
+                lfo.frequency.linearRampToValueAtTime(rate, actx.currentTime + 0.05);
+                currentDepth = Math.min(0.7, (rate - 0.1) / (19.9) * 0.7);
+                if (isActive)
+                    depthGain.gain.linearRampToValueAtTime(currentDepth, actx.currentTime + 0.05);
+            }
+        };
+    }
+    function createMainLayout() {
+        document.body.innerHTML = '';
+        Object.assign(document.body.style, { margin: '0', overflow: 'hidden', fontFamily: 'Arial,sans-serif', backgroundColor: '#222' });
+        const mainContainer = createElementWithStyles('div', { display: 'flex', width: '100vw', height: '100vh' });
+        document.body.appendChild(mainContainer);
+        const oscillatorSectionsContainer = createElementWithStyles('div', { display: 'flex', flexGrow: `${NUM_OSCILLATOR_SECTIONS}`, height: '100%' });
+        mainContainer.appendChild(oscillatorSectionsContainer);
+        const oscillatorSections = [];
+        const totalWidthRatio = NUM_OSCILLATOR_SECTIONS + FREQUENCY_SWEEP_SECTION_WIDTH_RATIO;
+        const oscillatorSectionWidthPercentage = 100 / totalWidthRatio;
+        for (let i = 0; i < NUM_OSCILLATOR_SECTIONS; i++) {
+            const section = createElementWithStyles('div', { width: `${oscillatorSectionWidthPercentage}%`, height: '100%', borderRight: '1px solid #383838', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', padding: '5px', overflowY: 'auto', backgroundColor: OSCILLATOR_CONFIGS[i].color + '1A' });
+            oscillatorSectionsContainer.appendChild(section);
+            oscillatorSections.push(section);
+        }
+        const frequencySweepSection = createElementWithStyles('div', { width: `${oscillatorSectionWidthPercentage * FREQUENCY_SWEEP_SECTION_WIDTH_RATIO}%`, height: '100%', borderLeft: '1px solid #444', padding: '10px', backgroundColor: '#2D2D2D', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999', fontSize: '11px', writingMode: 'vertical-rl', textOrientation: 'mixed', cursor: 'ns-resize' }, 'FREQ SWEEP');
+        mainContainer.appendChild(frequencySweepSection);
+        return { oscillatorSections: oscillatorSections, sweepSection: frequencySweepSection };
+    }
+    function createOscillatorSectionUI(parent, channel, config, index) {
+        const canvasWidth = parent.clientWidth > 50 ? parent.clientWidth * 0.8 : 80;
+        const canvasHeight = 50;
+        const group1 = createElementWithStyles('div', { minHeight: `${canvasHeight + 35}px`, borderBottom: '1px solid #444', padding: '5px', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', alignItems: 'center' });
+        const waveformCanvas = createWaveformDisplay(config.type, config.color, canvasWidth, canvasHeight);
+        const sustainSwitch = createSwitchControl(`Sustain(${config.sustainKey})`, a => channel.toggleSustain(a), channel.isSustainActive);
+        sustainSwitch.style.marginTop = '5px';
+        sustainSwitch.id = `sustain-switch-${index}`;
+        group1.append(waveformCanvas, sustainSwitch);
+        parent.appendChild(group1);
+        const volumeControl = createElementWithStyles('div', { minHeight: '35px', borderBottom: '1px solid #444', padding: '5px 8px', display: 'flex', alignItems: 'center' });
+        volumeControl.appendChild(createSliderControl('Vol', 0, 1, channel.volumeGainNode.gain.value, 0.01, v => channel.setVolume(v)));
+        parent.appendChild(volumeControl);
+        const effects = [
+            {
+                name: 'Reverb',
+                controls: [
+                    createSwitchControl('On', a => channel.reverb.setActive(a)),
+                    createSliderControl('Decay', 0.5, 8, 2, 0.1, v => channel.reverb.setParams({ decay: v })),
+                    createSelectControl('Espacio', ['Pequeña', 'Mediana', 'Grande'], v => channel.reverb.setParams({ type: v }), 'Mediana')
+                ]
+            },
+            {
+                name: 'Delay',
+                controls: [
+                    createSwitchControl('On', a => {
+                        channel.delay.setActive(a);
+                        const typeSelect = group4.querySelector('select');
+                        const currentTypeValue = a ? typeSelect.value : 'Off';
+                        const delayType = (a && currentTypeValue === 'Off') ? 'Corto' : currentTypeValue;
+                        if (a && currentTypeValue === 'Off')
+                            typeSelect.value = 'Corto';
+                        channel.delay.setParams({ type: delayType });
+                    }),
+                    createSelectControl('Tipo', ['Off', 'Corto', 'Medio', 'Largo'], v => channel.delay.setParams({ type: v }), 'Off')
+                ]
+            },
+            {
+                name: 'Overdrive',
+                controls: [
+                    createSliderControl('Drive', 0, 1, 0, 0.01, v => channel.overdrive.setParams({ amount: v }))
+                ]
+            },
+            {
+                name: 'Tremolo',
+                controls: [
+                    createSwitchControl('On', a => channel.tremolo.setActive(a)),
+                    createSliderControl('Vel.', 0.1, 20, 5, 0.1, v => channel.tremolo.setParams({ rate: v }))
+                ]
+            }
+        ];
+        let group4;
+        effects.forEach(effect => {
+            const group = createElementWithStyles('div', { minHeight: '60px', borderBottom: '1px solid #444', padding: '5px' });
+            const title = createElementWithStyles('h5', { margin: '2px 0 5px 0', fontSize: '12px', color: '#BBB', textAlign: 'center', fontWeight: 'bold' }, effect.name);
+            group.appendChild(title);
+            effect.controls.forEach(control => group.appendChild(control));
+            parent.appendChild(group);
+            if (effect.name === 'Delay')
+                group4 = group;
+        });
+    }
+    function setupFrequencySweepInteraction(sweepElement, channels) {
+        let frequencyFactor = 1.0;
+        sweepElement.addEventListener('wheel', e => {
+            e.preventDefault();
+            if (!audioContext || audioContext.state !== 'running')
+                return;
+            const scrollAmount = -e.deltaY;
+            frequencyFactor += scrollAmount * 0.001;
+            frequencyFactor = Math.max(0.1, Math.min(frequencyFactor, 5.0));
+            channels.forEach((channel, index) => {
+                const baseFrequency = OSCILLATOR_CONFIGS[index].baseFrequency;
+                channel.setFrequency(baseFrequency * frequencyFactor);
+            });
+        }, { passive: false });
+    }
+    function setupGlobalKeyListeners(channels, configs) {
+        document.addEventListener('keydown', async (e) => {
+            if (!audioContext)
+                return;
+            if (audioContext.state === 'suspended') {
+                try {
+                    await audioContext.resume();
+                } catch (err) {
+                    console.error("AC resume err:", err);
+                    return;
+                }
+            }
+            const key = e.key.toUpperCase();
+            if (pressedKeys[key])
+                return;
+            let actionTaken = false;
+            configs.forEach((config, index) => {
+                const channel = channels[index];
+                if (!channel)
+                    return;
+                if (key === config.triggerKey.toUpperCase()) {
+                    if (audioContext.state === 'running') {
+                        channel.playSound(channel.baseFrequency);
+                        actionTaken = true;
+                    } else {
+                        console.warn("AC not running for note play.");
+                    }
+                } else if (key === config.sustainKey.toUpperCase()) {
+                    const sustainSwitchElement = document.querySelector(`#sustain-switch-${index}`);
+                    if (sustainSwitchElement) {
+                        sustainSwitchElement.click();
+                        actionTaken = true;
+                    }
+                }
+            });
+            if (actionTaken)
+                pressedKeys[key] = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            if (!audioContext)
+                return;
+            const key = e.key.toUpperCase();
+            if (!pressedKeys[key])
+                return;
+            pressedKeys[key] = false;
+            configs.forEach((config, index) => {
+                const channel = channels[index];
+                if (!channel)
+                    return;
+                if (key === config.triggerKey.toUpperCase())
+                    channel.stopSound();
+            });
+        });
+    }
+    function initializeSynthesizer() {
+        try {
+            initializeAudioContext();
+            if (!audioContext)
+                throw new Error("AudioContext init failed critically.");
+            const unlockAudio = async () => {
+                if (audioContext && audioContext.state === 'suspended') {
+                    try {
+                        await audioContext.resume();
+                        console.log(`[${APP_NAME}] AC resumed by initial interaction. State: ${audioContext.state}`);
+                    } catch (err) {
+                        console.error("Initial AC resume err:", err);
+                    }
+                }
+            };
+            document.body.addEventListener('click', unlockAudio, { once: true });
+            document.body.addEventListener('keydown', unlockAudio, { once: true });
+            const layout = createMainLayout();
+            OSCILLATOR_CONFIGS.forEach((config, index) => {
+                const channel = new OscillatorChannel(config.type, config.baseFrequency, config.color);
+                oscillatorChannels.push(channel);
+                if (layout.oscillatorSections[index]) {
+                    createOscillatorSectionUI(layout.oscillatorSections[index], channel, config, index);
+                } else {
+                    console.error(`Parent for UI section ${index} not found.`);
+                }
+            });
+            setupFrequencySweepInteraction(layout.sweepSection, oscillatorChannels);
+            setupGlobalKeyListeners(oscillatorChannels, OSCILLATOR_CONFIGS);
+            console.log(`[${APP_NAME}] Synthesizer ready.`);
+            alert(`${APP_NAME} Ready!\nIMPORTANT: Click page or press any key ONCE to enable audio.\n\nNotes: C,V,B,N | Sustain: D,F,G,H | Freq Sweep: Scroll on right section.`);
+        } catch (error) {
+            console.error(`[${APP_NAME}] FATAL Init Error:`, error);
+            alert(`FATAL Init Error: ${error.message}`);
+        }
+    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        initializeSynthesizer();
+    } else {
+        document.addEventListener('DOMContentLoaded', initializeSynthesizer);
+    }
+}
+// Corrected function call to match the definition name
+runSynthesizer_75L_Canvas_KeyFix_ReverbFix();  
+
+
+    </script>
+</body>
+</html>
