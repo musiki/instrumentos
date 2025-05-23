@@ -1,4 +1,4 @@
- <img src="https://i.imgur.com/3dKJzNX.png" width="140px" height="46px" alt="GitHub Logo">
+ <img src="https://i.imgur.com/3dKJzNX.png" width="140px" height="42px" alt="GitHub Logo">
  
  
 
@@ -340,50 +340,32 @@ Banerjee, S. (2023). Metamaterials in Topological Acoustics (1st ed.). CRC Press
 
 ## Distribución de la Carga Horaria
 
-|Actividad|Horas|
-|---|---|
-|Teórica|50|
-|---|---|
-|Práctica|14|
-|---|---|
-|Total de la Carga Horaria|64|
-|---|---|
+| Actividad                 | Horas |
+| ------------------------- | ----- |
+| Teórica                   | 50    |
+| Práctica                  | 14    |
+| Total de la Carga Horaria | 64    |
 
 Valor total en créditos: 4 (cuatro)
 
 ## Cronograma del desarrollo de la asignatura
 
-|Semana|Unidad|Contenidos|Carga Horaria|Dictado|
-|---|---|---|---|---|
-|Semana 1|1,4|Introducción a la Organología. Ética Instrumental. Herramientas IA y html|4|expositiva / práctica|
-|---|---|---|---|---|
-|Semana 2|1, 4|Materiales, amplificación, transductores, timbre, tipologías.|4|expositiva / práctica|
-|---|---|---|---|---|
-|Semana 3|3|Fundamentos de Acústica 1: Señales|4|expositiva / práctica|
-|---|---|---|---|---|
-|Semana 4|3|Fundamentos de Acústica 2: Fourier y matemáticas aplicadas|4|expositiva / práctica|
-|---|---|---|---|---|
-|Semana 5|1,4|Interfaces e interacciones|4|expositiva / práctica|
-|---|---|---|---|---|
-|Semana 6|3|Fundamentos de Acústica 3: amplitud y sonoridad|4|expositiva / práctica|
-|---|---|---|---|---|
-|Semana 7|4|Producción de Audio: Home Studio|4|expositiva / práctica|
-|---|---|---|---|---|
-|Semana 8|1,4|Agentes e interacción aplicada|4|expositiva / práctica|
-|---|---|---|---|---|
-|Semana 9|3|Principio de Indeterminación acústico|4|expositiva / práctica|
-|---|---|---|---|---|
-|Semana 10|1,4|Mapas de mediación y entornos|4|expositiva / práctica|
-|---|---|---|---|---|
-|Semana 11|3,4|DAW / Ableton / m4l|4|expositiva / práctica|
-|---|---|---|---|---|
-|Semana 12|4|DAW: estructura de ganancia y otros.||expositiva / práctica|
-|---|---|---|---|---|
-|Semana 13||revisión de proyectos finales|4|expositiva / práctica|
-|---|---|---|---|---|
-|Semana 14||revisión de proyectos finales|4|expositiva / práctica|
-|---|---|---|---|---|
-|Semana 15||evaluación|4|expositiva / práctica|
-|---|---|---|---|---|
+| Semana    | Unidad | Contenidos                                                                | Carga Horaria | Dictado               |
+| --------- | ------ | ------------------------------------------------------------------------- | ------------- | --------------------- |
+| Semana 1  | 1,4    | Introducción a la Organología. Ética Instrumental. Herramientas IA y html | 4             | expositiva / práctica |
+| Semana 2  | 1, 4   | Materiales, amplificación, transductores, timbre, tipologías.             | 4             | expositiva / práctica |
+| Semana 3  | 3      | Fundamentos de Acústica 1: Señales                                        | 4             | expositiva / práctica |
+| Semana 4  | 3      | Fundamentos de Acústica 2: Fourier y matemáticas aplicadas                | 4             | expositiva / práctica |
+| Semana 5  | 1,4    | Interfaces e interacciones                                                | 4             | expositiva / práctica |
+| Semana 6  | 3      | Fundamentos de Acústica 3: amplitud y sonoridad                           | 4             | expositiva / práctica |
+| Semana 7  | 4      | Producción de Audio: Home Studio                                          | 4             | expositiva / práctica |
+| Semana 8  | 1,4    | Agentes e interacción aplicada                                            | 4             | expositiva / práctica |
+| Semana 9  | 3      | Principio de Indeterminación acústico                                     | 4             | expositiva / práctica |
+| Semana 10 | 1,4    | Mapas de mediación y entornos                                             | 4             | expositiva / práctica |
+| Semana 11 | 3,4    | DAW / Ableton / m4l                                                       | 4             | expositiva / práctica |
+| Semana 12 | 4      | DAW: estructura de ganancia y otros.                                      |               | expositiva / práctica |
+| Semana 13 |        | revisión de proyectos finales                                             | 4             | expositiva / práctica |
+| Semana 14 |        | revisión de proyectos finales                                             | 4             | expositiva / práctica |
+| Semana 15 |        | evaluación                                                                | 4             | expositiva / práctica |
 
 
