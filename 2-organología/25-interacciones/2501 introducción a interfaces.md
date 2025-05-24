@@ -12,6 +12,14 @@
 
 ---
 
+### estructura de la clase
+
+- affordance
+- hapticidad
+- sesgos de ai
+- tp lectura 
+
+---
 
 # affordance (*afordancia*)
 
@@ -168,29 +176,10 @@ Utilizar técnicas como:
 
 
 
-Claro, aquí tienes una propuesta para la clase sobre Modularidad y Sistemas de Sistemas (SoS) en el contexto de Interfaces en Organología especulativa, en formato compatible con Obsidian Markdown + Advanced Slides, incluyendo:
-	- Estructura de la clase con Mermaid
-	- Desarrollo conceptual
-	- Ejercicio práctico para MaxMSP / M4L / HTML+JS (console-based)
-	- Referencias APA dentro de <ref> </ref>
-
----
-
 # Interfaes actuales
 
 ---
 
-Aquí tienes los 10 ejemplos sobresalientes de expansión de la interfaz instrumental en formato Obsidian Markdown + Advanced Slides, con una diapositiva por ejemplo.
-
-⸻
-
-
----
-new interfaces = new instruments 
-
-! DMI ! HMI
-
----
 
 # Interfaces Expandidas  
 ## Música Contemporánea y Experimental (2005–2025)
