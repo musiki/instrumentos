@@ -13,26 +13,6 @@
 </grid>
 ---
 
-Instrumentos Musicales - Una introducción
-
-organización i1 i2 
-
-obsidian
-
-introducción a la organología
-
-*pausa*
-
-coreOps
-
-Hipérfonos
-
-AI
-
-análisis de un Instrumento 
-
----
-
 
 ![](https://i.imgur.com/kCrGQAk.png)
 

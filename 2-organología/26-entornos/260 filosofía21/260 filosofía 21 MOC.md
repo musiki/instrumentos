@@ -216,8 +216,11 @@ Cada uno de estos problemas conecta con ejes clásicos de la filosofía, proponi
 - **Autores:** Graham Priest, Jean-Yves Girard, Saul Kripke
 
 
-⸻
+#  ramas filosóficas 
 
-¿Te gustaría que agregue una tabla relacional para estos problemas, con campos como “autor clásico”, “autor contemporáneo”, “disciplina filosófica”, “caso o ejemplo paradigmático”, para convertirlo en una base en Obsidian o exportarla como CSV?
 
-También puedo preparar bibliografía en BibTeX para los problemas que selecciones como prioritarios.
+## filosofía continental
+
+### [[realismo especulativo]]
+
+## filosofía analítica
