@@ -1,8 +1,4 @@
  <img src="https://i.imgur.com/3dKJzNX.png" width="140px" height="40px" alt="GitHub Logo">
- 
- 
-
-
 Repositorio de las cátedras
 # Instrumentos I y II
 

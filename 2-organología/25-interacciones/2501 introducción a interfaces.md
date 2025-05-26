@@ -2,7 +2,7 @@
 # interfaces e interacciones 1
 </grid>
 <grid drag="-5 10" drop="5 -10" bg="black">
-![[i2-header]]
+![[i1-header]]
 </grid>
 <grid drag="25 55" drop="-5 10" bg="black" align="top">
 → affordance<br>
@@ -87,7 +87,7 @@ Un menú de hamburguesa (☰) permite ampliar un panel de navegación, y un icon
 # neuroergonomía 
 <ref> Parasuranam, Raja (2008)</ref>
 
-- utiliza los conocimientos del cerebro para mejorar la ineracción entre los humanos y un sistema. 
+- utiliza los conocimientos del cerebro para mejorar la interacción entre los humanos y un sistema. 
 - introduce la idea del *empan* (talla), refiréndose a la cualidad de ciertos objetos como más agarrables por el cerebro, asi como un objeto con una manija es más agarrable por la mano. 
 
 ---
@@ -176,7 +176,7 @@ Utilizar técnicas como:
 
 
 
-# Interfaes actuales
+# Interfaces actuales
 
 ---
 
