@@ -13,7 +13,9 @@ https://google-research.github.io/seanet/musiclm/examples/
 
 ---
 
+# notación y transcripción
 
+https://klang.io/es
 # vocal
 so-vits-svc
  elevenLabs
