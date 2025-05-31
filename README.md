@@ -239,7 +239,27 @@ Watkins, R., & Barak-Medina, E. (2024). AI’s Influence on Human Creative Agenc
 
 ### Unidad 2: Organología
 
+#### Instrumento 1
+##### Materiales
 Dolan, E. I., & Tresch, J. (2013). Toward a New Organology: Instruments of Music and Science. Osiris, 28(1), 278–298. [https://doi.org/10.1086/671381](https://doi.org/10.1086/671381)
+
+##### Objetos
+##### Interacciones
+
+Tullberg, M. (2022). Affordances of musical instruments: Conceptual consideration. Frontiers in Psychology, 13, 974820. [https://doi.org/10.3389/fpsyg.2022.974820](https://doi.org/10.3389/fpsyg.2022.974820)
+
+##### Agentes
+##### Entornos
+
+#### Instrumento 2
+##### Materiales
+##### Objetos
+##### Interacciones
+##### Agentes
+##### Entornos
+
+
+
 
 Hankins, T. L., & Silverman, R. J. (1999). Instruments and the imagination (2nd print). Princeton Univ. Press.
 
@@ -257,7 +277,6 @@ Magnusson, T. (2019). Ergodynamics and a semiotics of instrumental composition. 
 
 Sanches, P., Howell, N., Tsaknaki, V., Jenkins, T., & Helms, K. (2022). Diffraction-in-action: Designerly Explorations of Agential Realism Through Lived Data. CHI Conference on Human Factors in Computing Systems, 1–18. [https://doi.org/10.1145/3491102.3502029](https://doi.org/10.1145/3491102.3502029)
 
-Tullberg, M. (2022). Affordances of musical instruments: Conceptual consideration. Frontiers in Psychology, 13, 974820. [https://doi.org/10.3389/fpsyg.2022.974820](https://doi.org/10.3389/fpsyg.2022.974820)
 
 Petersen, M. G., Iversen, O. S., Krogh, P. G., & Ludvigsen, M. (2004). Aesthetic interaction: A pragmatist’s aesthetics of interactive systems. Proceedings of the 5th Conference on Designing Interactive Systems: Processes, Practices, Methods, and Techniques, 269–276. [https://doi.org/10.1145/1013115.1013153](https://doi.org/10.1145/1013115.1013153)
 
@@ -272,7 +291,7 @@ De Landa, M. (2016). _Assemblage Theory_. Introducción
 
 Foucault, M. (1994). _Hermeneutica del sujeto_. Las Ediciones de la Piqueta.
 
-Unidad 3: Acústica
+### Unidad 3: Acústica
 
 Basso, G. (1999). Análisis espectral. Univ. Nacional de La Plata.
 

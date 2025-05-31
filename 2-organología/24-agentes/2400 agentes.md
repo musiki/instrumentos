@@ -3,7 +3,7 @@
 ## Clase 4
 </grid>
 <grid drag="-5 10" drop="5 -10" bg="black">
-![[i1-header]]
+![[i2-header]]
 </grid>
 
 <grid drag="25 55" drop="-5 10" bg="black" align="top">
@@ -14,6 +14,20 @@
 
 ---
 
+## cronograma
+
+- 30/05 Organología-Agentes
+- 6/06 Max - TP5 entrega , TP6 presentación
+- 13/06 Max - TP6 Max
+- 20/06 Feriado
+- 27/06 Organología - Entornos y Tp Final
+- 04/07 Correcciones por Batch
+- 11/07 Correcciones 2 
+- 21/07 Mesa de **Examen** 1 - Concierto - 
+
+---
+
+
 1. humanos
 	1. el concepto de Yo. Prometeo
 	2. la megamáquina y segunda naturaleza
@@ -21,11 +35,11 @@
 	1. animales, hongos, insectos, plantas.
 	2. autómatas
 3. cyborgs
-	1. cPG central pattern generator
-	2. HCO half center oscillator
-	3. Cognición distribuida, co-creación
-	4. Cognición corporeizada
-	5. Memoria musical propicéptica. 
+	1. HCO half center oscillator
+4. Estreno Tess
+	1. Cognición distribuida, co-creación
+	2. Cognición corporeizada
+	3. Memoria musical propicéptica. 
 
 
 ---

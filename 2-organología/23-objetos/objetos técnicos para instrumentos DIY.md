@@ -56,7 +56,7 @@ motores PAP
 - potenciometros
 - FSR (sensor de fuerza)
 - LDR (sensor de luz)
-- Conductividad (circuit bending)
+- Conductividad (circuit bending) Jorge Crowe
 
 ## 7. sistemas embebidos
 - Control digital de sensores y motores
