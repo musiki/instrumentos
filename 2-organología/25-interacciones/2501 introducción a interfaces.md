@@ -2,7 +2,7 @@
 # interfaces e interacciones 1
 </grid>
 <grid drag="-5 10" drop="5 -10" bg="black">
-![[i1-header]]
+![[i2-header]]
 </grid>
 <grid drag="25 55" drop="-5 10" bg="black" align="top">
 → affordance<br>

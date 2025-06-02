@@ -39,11 +39,30 @@ Módulo de Young determina la rigidez.
 
 ---
 
-Guitarra: Vibración de Cuerdas
+### Guitarra: Vibración de cuerdas
 
-Excitación de cuerdas: El palo chino actúa como una púa.
-Frecuencia de la cuerda:  $$ f = \frac{1}{2L} \sqrt{\frac{T}{\mu}} $$  Donde ( L ) es la longitud, ( T ) es la tensión, ( \mu ) es la densidad lineal.
-Resonancia de la caja: Amplifica el sonido.
+<p>
+<strong>Excitación de cuerdas</strong>: el palo chino actúa como una púa.
+</p>
+
+<p>
+<strong>Frecuencia de la cuerda</strong>:
+</p>
+
+$$
+f = \frac{1}{2L} \sqrt{\frac{T}{\mu}}
+$$
+
+<p>
+Donde: <br>
+<em>L</em>: longitud de la cuerda. <br>
+<em>T</em>: tensión aplicada. <br>
+<em>μ</em>: densidad lineal de masa.
+</p>
+
+<p>
+<strong>Resonancia de la caja</strong>: amplifica el sonido.
+</p>
 
 ---
 
@@ -112,21 +131,12 @@ La crin se tensa al contactar la cuerda y se libera, generando rebotes.
 *Hapticidad*: Sensación de los rebotes en la mano (retroalimentación táctil).
 *Frecuencia de rebote*: Depende de la velocidad del arco y la tensión de la crin.
 
-
-### Saltarello (Saltando)
-
-Descripción: Técnica de rebote controlado, similar a spiccato pero más enérgico.
-Principio físico: La crin excita la cuerda en breves contactos, con liberación elástica.
-Similar a soltar la regla: vibración tras cada contacto.
-
-
-Gestualidad: Movimientos cortos y precisos del brazo.
-Hapticidad: Sensación de la resistencia de la cuerda en cada rebote.
-Modos de vibración: Excita armónicos según el punto de contacto.
+<iframe title="Ricochet - String Techniques" src="https://www.youtube.com/embed/zOHcQnEj_jQ?feature=oembed" height="113" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.76991 / 1; width: 100%; height: 100%;"></iframe>
 
 ---
 
-### Gettato
+
+### Gettato (crini jeté)
 
 Descripción: Lanzamiento del arco para producir un rebote controlado en una sola nota.
 Principio físico: Transferencia de energía cinética y elástica en un solo impulso.
@@ -136,6 +146,9 @@ La cuerda vibra tras la liberación rápida de la crin.
 *Gestualidad*: Movimiento de "lanzamiento" con el arco.
 *Hapticidad*: Sensación del impacto inicial y la respuesta de la cuerda.
 *Amortiguamiento*: La vibración se desvanece rápido por la fricción.
+
+<iframe title="CSTC - crini jeté or gettato - 17" src="https://www.youtube.com/embed/fSqqf9x5ULg?feature=oembed" height="113" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.76991 / 1; width: 100%; height: 100%;"></iframe>
+
 
 ---
 
@@ -150,8 +163,13 @@ La crin deforma la cuerda y se libera en cada rebote.
 *Hapticidad*: Sensación constante de la tensión y liberación de la cuerda.
 *Frecuencia*: Depende de la velocidad del arco y la longitud libre.
 
+<iframe title="DE SPICCATO" src="https://www.youtube.com/embed/HbSTzp9EiZ0?feature=oembed" height="113" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.76991 / 1; width: 100%; height: 100%;"></iframe>
 
-### Sautillé
+
+
+
+---
+### Sautillé (Saltellato, Saltarello, saltando)
 
 *Descripción*: Rebote rápido y automático del arco, impulsado por la elasticidad de la vara.
 *Principio físico*: La vara del arco actúa como una viga elástica:$$ f = \frac{1}{2\pi} \sqrt{\frac{k}{m}} $$Donde ( k ): rigidez de la vara, ( m ): masa efectiva.
@@ -160,6 +178,8 @@ La crin deforma la cuerda y se libera en cada rebote.
 *Resonancia*: Amplifica armónicos en la cuerda.
 
 <div align="center">a sample: <span class="math display">Z_{c}</span></div>
+<iframe title="🎻🎻Golpes de Arco   SALTELLATO o SALTILLO🎻🎻" src="https://www.youtube.com/embed/2sVhNGEsWO0?feature=oembed" height="113" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.76991 / 1; width: 100%; height: 100%;"></iframe>
+
 
 ---
 

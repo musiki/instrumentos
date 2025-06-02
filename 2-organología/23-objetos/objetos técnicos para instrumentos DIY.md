@@ -10,7 +10,6 @@ taxonomía de instrumentalización tecnológica gradual desde la voz a sistemas 
 - Registro corporal de lo expresivo
 ## 1. instrumentos acústicos
 - **Materiales**: cañas, madera, metal, cuerda
-- Idiófonos, aerófonos, membranófonos
 - Percusión de superficie (superficies de la vida cotidiana)
 - **Concepto**: *instrumento-acción*, *instrumento-encontrado* (objet trouvé sonoro)
 
