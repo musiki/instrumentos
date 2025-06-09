@@ -101,11 +101,16 @@ Cada uno de estos problemas conecta con ejes clásicos de la filosofía, proponi
 - **Actualización:** El poder ya no reside en el Estado o la propiedad material, sino en la infraestructura digital y el control del *tracking*.
 - **Autores:** Cédric Durand, Evgeny Morozov, Yanis Varoufakis
 
+---
+
 ## 2. Subjetividad autoexplotada
 - **Campo:** Ética / Psicopolítica
 - **Problema clásico:** ¿Qué es la libertad? (Kant, Mill)
 - **Actualización:** El sujeto neoliberal se explota a sí mismo bajo la ilusión de autonomía.
 - **Autores:** Byung-Chul Han, Foucault (biopolítica)
+
+
+---
 
 ## 3. Ontología agencial
 - **Campo:** Ontología / Filosofía de la ciencia
@@ -113,11 +118,17 @@ Cada uno de estos problemas conecta con ejes clásicos de la filosofía, proponi
 - **Actualización:** La materia no es pasiva; la agencia emerge de intra-acciones.
 - **Autores:** Karen Barad, Donna Haraway, Whitehead
 
+---
+
+
 ## 4. Epistemología post-verdad
 - **Campo:** Epistemología / Lógica
 - **Problema clásico:** ¿Qué es la verdad? (Platón, Descartes)
 - **Actualización:** La verdad se desvanece en un mar de discursos orientados al efecto, no a la veracidad.
 - **Autores:** Harry Frankfurt, Latour, Chomsky (en crítica)
+
+
+---
 
 ## 5. Algocracia
 - **Campo:** Filosofía política / Epistemología matemática
@@ -125,11 +136,17 @@ Cada uno de estos problemas conecta con ejes clásicos de la filosofía, proponi
 - **Actualización:** Algoritmos realizan decisiones sin mediación humana, pero sin responsabilidad.
 - **Autores:** Antoinette Rouvroy, Mireille Hildebrandt
 
+
+---
+
 ## 6. Performatividad técnica
 - **Campo:** Ontología / Estética / Organología
 - **Problema clásico:** ¿Qué es un objeto? ¿Qué es un instrumento?
 - **Actualización:** Los objetos técnicos configuran modos de ser y de hacer, no son neutros.
 - **Autores:** Gilbert Simondon, Don Ihde, Luciano Floridi
+
+---
+
 
 ## 7. Temporalidad acelerada
 - **Campo:** Metafísica / Estética del tiempo
@@ -137,11 +154,16 @@ Cada uno de estos problemas conecta con ejes clásicos de la filosofía, proponi
 - **Actualización:** La aceleración disuelve el presente y desincroniza los cuerpos sociales.
 - **Autores:** Hartmut Rosa, Bernard Stiegler
 
+---
+
 ## 8. Externalización de la memoria
 - **Campo:** Filosofía de la mente / Epistemología
 - **Problema clásico:** ¿Dónde reside el conocimiento?
 - **Actualización:** El saber se delega a máquinas, generando ignorancia ilustrada.
 - **Autores:** Andy Clark, Katherine Hayles
+
+
+---
 
 ## 9. Estética del dato
 - **Campo:** Estética / Fenomenología
@@ -149,11 +171,16 @@ Cada uno de estos problemas conecta con ejes clásicos de la filosofía, proponi
 - **Actualización:** La estetización se reduce a interfaces cuantificables.
 - **Autores:** Lev Manovich, James Bridle, McKenzie Wark
 
+---
+
 ## 10. Responsabilidad sin presencia
 - **Campo:** Ética / Filosofía del derecho
 - **Problema clásico:** ¿Qué es actuar moralmente?
 - **Actualización:** El daño ocurre sin agentes visibles ni efectos inmediatos.
 - **Autores:** Hans Jonas, Derrida, Latour
+
+
+---
 
 ## 11. Cognición artificial
 - **Campo:** Filosofía de la mente / Ciencias cognitivas
@@ -161,17 +188,25 @@ Cada uno de estos problemas conecta con ejes clásicos de la filosofía, proponi
 - **Actualización:** Las máquinas aprenden sin representar, afectando la definición de inteligencia.
 - **Autores:** Andy Clark, Hubert Dreyfus, Luc Steels
 
+---
+
 ## 12. Imaginación especulativa
 - **Campo:** Metafísica / Filosofía del arte
 - **Problema clásico:** ¿Qué es lo posible?
 - **Actualización:** La ficción se convierte en laboratorio filosófico.
 - **Autores:** Quentin Meillassoux, Mark Fisher, Reza Negarestani
 
+
+---
+
 ## 13. Desaparición de lo común
 - **Campo:** Filosofía política / Ontología social
 - **Problema clásico:** ¿Qué es lo político?
 - **Actualización:** Las infraestructuras privatizadas redefinen el espacio y el acceso.
 - **Autores:** Michael Hardt, Antonio Negri, Jodi Dean
+
+
+---
 
 ## 14. Neurocapitalismo y neuroética
 - **Campo:** Ética / Ciencias cognitivas
@@ -185,12 +220,17 @@ Cada uno de estos problemas conecta con ejes clásicos de la filosofía, proponi
 - **Actualización:** Se cuestiona la distinción sujeto/objeto, humano/no-humano.
 - **Autores:** Eduardo Viveiros de Castro, Timothy Morton, Bruno Latour
 
+
+---
+
 ## 16. Disolución de la escala humana
 - **Campo:** Metafísica / Estética
 - **Problema clásico:** ¿Qué es lo sublime?
 - **Actualización:** Escalas inhumanas (planetarias, cuánticas) desafían la representación.
 - **Autores:** Jean-François Lyotard, Yuk Hui
 
+
+---
 ## 17. Cultura sintética
 - **Campo:** Estética / Ontología de medios
 - **Problema clásico:** ¿Qué es la técnica?
