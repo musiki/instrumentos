@@ -17,7 +17,6 @@ connect:
 created: 18-02-2025
 modified: 
 ---
-```
 
 ## Contexto y antecedentes  
 El modelo surge como respuesta a limitaciones de los enfoques textualistas en psicolingüística, que subestimaban el rol activo del lector. Los trabajos de Bartlett sobre esquemas (1932) y los modelos de Van Dijk y Kintsch (1983) establecieron bases para entender cómo se organiza el conocimiento durante la comprensión lectora. La neurociencia cognitiva posterior validó su correlato neural mediante estudios de fMRI sobre activación cortical durante inferencias.
@@ -103,7 +102,7 @@ fig.show()
         \clef treble
         <<
             { \tempo 4 = 60 
-              c'4\pp\< e' g' c''\ff \bar "||" 
+              c'4\pp\< ees' gis' d''\mp \bar "||" 
               d''4\> b' g' e'\pp } \\
             { \repeat tremolo 8 { c32\sustainOn e } \sustainOff }
         >>

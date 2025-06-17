@@ -45,6 +45,11 @@ https://www.youtube.com/watch?v=N1TEjTeQeg0
 ---
 # Momentos Claves en la Historia de la IA
 
+![](https://i.imgur.com/No5e392.png)
+
+---
+
+
 <p class="fragment">1950 - Alan Turing propone la prueba de Turing.</p>
 <p class="fragment">1956 - Conferencia de Dartmouth: nacimiento oficial de la IA.</p>
 <p class="fragment">1980s - Resurgimiento con redes neuronales y aprendizaje profundo.</p>

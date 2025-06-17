@@ -3,7 +3,7 @@
 ## Clase 4
 </grid>
 <grid drag="-5 10" drop="5 -10" bg="black">
-![[i2-header]]
+![[i1-header]]
 </grid>
 
 <grid drag="25 55" drop="-5 10" bg="black" align="top">
@@ -16,13 +16,10 @@
 
 ## cronograma
 
-- 30/05 Organología-Agentes
-- 6/06 Max - TP5 entrega , TP6 presentación
-- 13/06 Max - TP6 Max
-- 20/06 Feriado
-- 27/06 Organología - Entornos y Tp Final
-- 04/07 Correcciones por Batch
-- 11/07 Correcciones 2 
+- 16/06 Feriado
+- 23/06 Organología-Entornos
+- 30/06 Correcciones por Batch
+- 07/07 Correcciones 2 
 - 21/07 Mesa de **Examen** 1 - Concierto - 
 
 ---
