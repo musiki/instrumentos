@@ -1,3 +1,4 @@
+
 | Tipo de interacción | Descripción acústica                   | Gesto principal      | Controlabilidad | Ejemplos sonoros/instrumentales                   |
 |---------------------|----------------------------------------|----------------------|------------------|---------------------------------------------------|
 | Chapoteo            | Ruido amplio, transitorio, amplio espectro | Percusión del agua con manos u objetos | Media              | Juegos, percusión acuática, danzas tribales       |

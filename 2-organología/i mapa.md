@@ -274,4 +274,79 @@
 
 
 
-	 
+
+---
+
+```mermaid
+graph LR
+
+%% --- Entrada: transducción e input ---
+subgraph Entrada
+  A1[Transducción acústica generativa]
+  A2[Transducción eléctrica de entrada]
+  A3[Imagen-in]
+  A4[Gesto-in]
+end
+
+%% --- Salida: transducción de acción ---
+subgraph Salida
+  B1[Transducción acústica digital]
+  B2[Transducción eléctrica de salida]
+end
+
+%% --- Interfaces e interacción ---
+subgraph Interacción
+  C1[Tipología de interfaz]
+  C2[Tipo de interacción]
+end
+
+%% --- Entornos de propagación y sentido ---
+subgraph Entornos
+  D1[Entorno material]
+  D2[Entorno sónico de propagación]
+  D3[Entorno social]
+  D4[Entorno histórico]
+end
+
+%% --- Marcos conceptuales ---
+subgraph MarcoConceptual
+  E1[Framework filosófico]
+  E2[Tipo de agente]
+end
+
+%% --- Relación jerárquica global del sistema ---
+root((Poliedro))
+
+root --> Entrada
+root --> Salida
+root --> Interacción
+root --> Entornos
+root --> MarcoConceptual
+
+Entrada --> A1
+Entrada --> A2
+Entrada --> A3
+Entrada --> A4
+
+Salida --> B1
+Salida --> B2
+
+Interacción --> C1
+Interacción --> C2
+
+Entornos --> D1
+Entornos --> D2
+Entornos --> D3
+Entornos --> D4
+
+
+MarcoConceptual --> E1
+MarcoConceptual --> E2
+
+```
+
+
+
+
+
+

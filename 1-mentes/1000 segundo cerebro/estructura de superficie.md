@@ -71,7 +71,7 @@ graph TD
 ```
 
 ## Python  
-```python
+```run-python
 import plotly.express as px
 import numpy as np
 
@@ -85,6 +85,7 @@ fig = px.line(x=words, y=processing_load,
 fig.update_layout(template='plotly_white')
 fig.show()
 ```
+
 
 ## Representación musical  
 ```lilypond
