@@ -1,0 +1,20 @@
+{
+  "name": "max-osc-ws-bridge",
+  "version": "1.0.0",
+  "description": "WebSocket to Max bridge using osc-js for node.script in Max",
+  "main": "osc-ws.js",
+  "scripts": {
+    "start": "node osc-ws.js"
+  },
+  "dependencies": {
+    "osc-js": "^3.3.1"
+  },
+  "keywords": [
+    "osc",
+    "websocket",
+    "maxmsp",
+    "sensors"
+  ],
+  "author": "Tu Nombre",
+  "license": "MIT"
+}
