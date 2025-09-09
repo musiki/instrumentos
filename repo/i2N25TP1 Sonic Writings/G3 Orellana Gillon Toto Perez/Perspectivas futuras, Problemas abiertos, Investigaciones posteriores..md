@@ -1,6 +1,6 @@
 
 
-A partir del capitulo Writing Music, del libro [[Sonic Writing]] de Thor Magnusson, elaboramos las siguientes cuestiones:
+A partir del capitulo Writing Music, del libro [[repo/i2N25TP1 Sonic Writings/G3 Orellana Gillon Toto Perez/Sonic Writing]] de Thor Magnusson, elaboramos las siguientes cuestiones:
 
 
 - Absolutamente todos los músicos de la época utilizaban estos tipos de notación presentadas en el texto?

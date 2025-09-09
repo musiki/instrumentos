@@ -1,5 +1,5 @@
 
-[[Sonic Writing]]: Technologies of Material, Symbolic and Signal Inscriptions (Thor Magnusson, 2019)
+[[repo/i2N25TP1 Sonic Writings/G3 Orellana Gillon Toto Perez/Sonic Writing]]: Technologies of Material, Symbolic and Signal Inscriptions (Thor Magnusson, 2019)
 
 https://www.memoria.fahce.unlp.edu.ar/trab_eventos/ev.203/ev.203.pdf
 

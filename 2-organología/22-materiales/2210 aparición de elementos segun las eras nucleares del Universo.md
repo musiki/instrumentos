@@ -52,3 +52,6 @@ Resumen cosmológico del orden de aparición:
 ⸻
 
 ¿Querés que conectemos esto con la idea de “materialidad cósmica” de los instrumentos o con la evolución de los objetos técnicos?
+
+
+

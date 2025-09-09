@@ -109,9 +109,10 @@ touchdesigner
 
 #### en entornos de juegos
 
-- unity
+- unity 
 - UnrealEngine
 - Lidar cams (rotoscopy)
+- blender
 
 #### otros
 

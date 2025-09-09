@@ -91,7 +91,7 @@ Observaciones
 
 ## para fusion360
 
-```python
+```run-python
 # === Escala definida en CENTS ===
 # Escala: 0 168 369 510 720 860 1130
 scale_cents = [0, 168, 369, 510, 720, 860, 1130]
