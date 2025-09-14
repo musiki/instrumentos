@@ -11,19 +11,19 @@
 → interfaces<br>
 → medidas<br>
 → instrumentos y herramientas<br>
-</grid>
+## </grid>
 ---
 
 ## que es una interface  
 
 ---
 
-Robin Michel, formen , 2022
+### Robin Michel, formen , 2022
 <iframe title="formen" src="https://www.youtube.com/embed/daHQq2o7Tnc?start=399&amp;feature=oembed" height="113" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.76991 / 1; width: 100%; height: 100%;"></iframe>
 
 ---
 
-Candas Sisman, macrocosm, 1985
+### Candas Sisman, macrocosm, 1985
 
 <iframe title="Macrocosm" height="360" width="640"  border="0" src="https://player.vimeo.com/video/289012856?h=68ef7bc69d&amp;app_id=122963" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.77778 / 1; width: 100%; height: 100%;"></iframe>
 
@@ -51,8 +51,12 @@ note: Configuración para la captura óptica de movimiento por infrarrojos de la
 
 # fuerza
 
-FSR (*force sensing resistors*, fuerza aplicada a un objeto)
-EMG  (electromiografía)
+- FSR (*force sensing resistors*, fuerza aplicada a un objeto)
+- EMG  (electromiografía)
+- f = uN (fricción)
+- Hapticidad 
+
+---
 
 ## FSR
 
@@ -63,7 +67,7 @@ note:
 La fuerza aplicada a un objeto puede medirse con un resistor sensible a la fuerza (FSR). Estos sensores son cada vez más populares en las nuevas interfaces musicales, ya que permiten un control continuo de las características del sonido. Veremos más ejemplos de este uso en capítulos posteriores. La fuerza también puede estimarse midiendo la actividad muscular, lo que se ha popularizado  en los dispositivos de música experimental (Tanaka 1993; Pérez y Knapp 2008).
 
 ---
-Atau Tanaka, 1980~
+### Atau Tanaka, 1980~
 
 <iframe title="Sensorband" src="https://www.youtube.com/embed/o-ZcsAHVn6A?feature=oembed" height="150" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.33333 / 1; width: 100%; height: 100%;"></iframe>
 
@@ -186,3 +190,44 @@ Los emblemas son patrones estereotipados con un significado acordado, como agita
 
 ---
 
+## chromaplane  (2024)
+Passpartou Duo
+
+
+<iframe title="Circo Pobre, Part IV - Passepartout Duo" src="https://www.youtube.com/embed/l9KtmNCNpY4?feature=oembed" height="113" width="200" allowfullscreen="" allow="fullscreen" style="aspect-ratio: 1.76991 / 1; width: 100%; height: 100%;"></iframe>
+
+note:  Se toca utilizando dos bobinas de captación electromagnética, que se utilizan para escuchar una nube de campos electromagnéticos producidos por el instrumento. Los campos se disponen en un patrón isomórfico y se identifican mediante pequeños puntos en la superficie del instrumento.
+
+---
+
+<iframe src="https://koma-elektronik.com/chromaplane/chromaplane-tuning.html?note1=77&amp;note2=81&amp;note3=79&amp;note4=76&amp;note5=74&amp;note6=62&amp;note7=72&amp;note8=50&amp;note9=70&amp;note10=69" allow="fullscreen" allowfullscreen="" style="height:100%;width:100%; aspect-ratio: 16 / 9; "></iframe>
+
+---
+## fello  (2015)
+Andi Otto
+![](https://i.imgur.com/enNz7qC.png)
+---
+![](https://i.imgur.com/JRWs2YS.png)
+
+---
+
+```bibtex
+@book{Wieser2014Das,
+	note = {[Online; accessed 2025-09-09]},
+	author = {Wieser, Matthias},
+	year = {2014},
+	month = {mar 15},
+	publisher = {transcript Verlag},
+	title = {Das {Netzwerk} von {Bruno} {Latour}: Die {Akteur}-{Netzwerk}-{Theorie} zwischen {Science} & {Technology} {Studies} und poststrukturalistischer {Soziologie}},
+}
+@book{Bakken2014George,
+	note = {[Online; accessed 2025-09-09]},
+	author = {Bakken, Tore},
+	year = {2014},
+	month = {oct 2},
+	publisher = {Oxford University Press},
+	title = {George {Spencer}-{Brown} (1923b)},
+}
+
+
+```
